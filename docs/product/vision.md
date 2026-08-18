@@ -392,6 +392,9 @@ infrastructure/
 
 The engine accepts validated, typed inputs and returns structured results. It does not know about HTTP, UI components, databases, charts, or natural-language explanations.
 
+The initial supported financial conventions and common ledger are defined in
+[Milestone 0 financial contracts](../specifications/financial-contracts.md).
+
 All financial calculations must declare:
 
 - monetary unit;

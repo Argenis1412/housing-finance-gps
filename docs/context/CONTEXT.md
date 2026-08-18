@@ -14,11 +14,11 @@
 - **Repository state:** Git is available. Work follows the issue-first,
   issue-numbered-branch, draft-pull-request workflow in the development
   process.
-- **Architecture:** Product direction is approved. Reference-case governance
-  and simulation provenance are documented in ADRs; remaining implementation
-  decisions still require ADRs.
-- **Current priority:** Complete Milestone 0 reference-case governance and
-  provenance before financial contracts, synthetic fixtures, or application
+- **Architecture:** Product direction is approved. Reference-case governance,
+  simulation provenance, financial conventions, and backend authority are
+  documented in ADRs; remaining implementation decisions still require ADRs.
+- **Current priority:** Complete Milestone 0 financial contracts and the
+  common ledger before synthetic fixtures, QA selection, or application
   scaffolding.
 
 ## Approved direction
