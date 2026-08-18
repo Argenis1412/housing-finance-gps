@@ -14,9 +14,10 @@ only after the calculation engine has been validated.
 
 ## Current status
 
-The repository is in the specification and foundation phase. Product scope
-has been approved; application scaffolding and QA commands have not yet been
-established.
+Milestone 0 documentation is ready: governance, provenance, financial
+contracts, a synthetic regression reference, and a selected (but unconfigured)
+QA baseline are recorded. Application scaffolding and executable QA commands
+have not yet been established.
 
 See [current context](docs/context/CONTEXT.md) for the exact active priority.
 
@@ -37,6 +38,8 @@ The frontend never owns authoritative financial formulas.
 - [Current project context](docs/context/CONTEXT.md)
 - [Development workflow](docs/process/development-workflow.md)
 - [Architecture decisions](docs/adr/README.md)
+- [Financial contracts](docs/specifications/financial-contracts.md)
+- [Synthetic regression reference and QA baseline](docs/specifications/milestone-0-synthetic-reference-and-qa.md)
 - [Historical reference](docs/context/reference.md)
 - [Deferred discoveries](docs/context/discoveries.md)
 

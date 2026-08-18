@@ -1,6 +1,6 @@
 # Housing Finance GPS — Current Context
 
-> Last updated: August 17, 2026
+> Last updated: August 18, 2026
 > Read [AGENTS.md](../../AGENTS.md) before this document. This file describes
 > current repository reality, not future intent and not implementation history.
 
@@ -9,17 +9,17 @@
 - **Product:** A private Brazilian housing decision-support tool comparing
   SAC or Price financing, consortium scenarios, and renting while
   accumulating capital.
-- **Delivery state:** Pre-v1 specification and foundation phase. No
+- **Delivery state:** Milestone 0 documentation readiness is complete. No
   application implementation or configured QA toolchain is present yet.
 - **Repository state:** Git is available. Work follows the issue-first,
   issue-numbered-branch, draft-pull-request workflow in the development
   process.
 - **Architecture:** Product direction is approved. Reference-case governance,
   simulation provenance, financial conventions, and backend authority are
-  documented in ADRs; remaining implementation decisions still require ADRs.
-- **Current priority:** Complete Milestone 0 financial contracts and the
-  common ledger before synthetic fixtures, QA selection, or application
-  scaffolding.
+  documented in ADRs. A synthetic regression reference and a selected,
+  unconfigured QA baseline complete Milestone 0 documentation.
+- **Current priority:** No implementation proposal is active. Any
+  application-scaffolding proposal remains approval-gated after Milestone 0.
 
 ## Approved direction
 
@@ -62,8 +62,10 @@ those rules.
 ## QA status
 
 Concrete lint, formatting, type-checking, unit-test, contract-test, and
-browser-test commands are not configured yet. Milestone 0 must select and
-record them before any implementation is considered complete.
+browser-test commands are not configured yet. Milestone 0 selected and
+recorded their baseline in
+[synthetic regression reference and QA baseline](../specifications/milestone-0-synthetic-reference-and-qa.md);
+configuration remains a future implementation work item.
 
 Until then, documentation changes are validated by checking:
 

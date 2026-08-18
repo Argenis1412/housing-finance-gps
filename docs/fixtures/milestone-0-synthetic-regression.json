@@ -1,0 +1,297 @@
+{
+  "schema_version": "milestone-0.synthetic-regression@1",
+  "fixture_id": "milestone-0-baseline-v1",
+  "fixture_class": "synthetic_regression_fixture",
+  "engine_version": "contract-reference-v1",
+  "ruleset_version": "milestone-0-initial",
+  "data_snapshot_id": "synthetic-regression-v1",
+  "privacy": {
+    "synthetic": true,
+    "contains_real_reference_case_data": false,
+    "eligible_for_git_and_ci": true
+  },
+  "shared_conventions": {
+    "currency": "BRL",
+    "monetary_representation": "decimal_string_two_fractional_digits",
+    "rounding": "ROUND_HALF_UP",
+    "financing_and_return_rate_basis": "effective_monthly",
+    "rent_adjustment_rate_basis": "effective_annual",
+    "comparison_horizon_months": 60,
+    "positive_classified_flow_amount": "cash_outflow",
+    "comparison_opening_cash": "20000.00"
+  },
+  "fixtures": {
+    "sac_basic": {
+      "input_classification": {
+        "comparison_opening_cash": "observed_data",
+        "property_price": "contractual_data",
+        "cash_down_payment": "observed_data",
+        "principal": "contractual_data",
+        "term_months": "contractual_data",
+        "effective_monthly_rate": "contractual_data"
+      },
+      "inputs": {
+        "property_price": "1500.00",
+        "cash_down_payment": "300.00",
+        "principal": "1200.00",
+        "term_months": 12,
+        "effective_monthly_rate": "0.01"
+      },
+      "checkpoints": [
+        {
+          "event": "month_0_purchase",
+          "expected": {
+            "cash": "19700.00",
+            "property_value": "1500.00",
+            "financing_principal_balance": "1200.00",
+            "consortium_credit_obligation_balance": "0.00"
+          }
+        },
+        {
+          "month": 1,
+          "expected": {
+            "interest": "12.00",
+            "amortization": "100.00",
+            "payment": "112.00",
+            "cash": "19588.00",
+            "financing_principal_balance": "1100.00",
+            "nonrecoverable_housing_cost": "12.00",
+            "cumulative_housing_cost": "12.00"
+          }
+        },
+        {
+          "month": 12,
+          "expected": {
+            "interest": "1.00",
+            "amortization": "100.00",
+            "payment": "101.00",
+            "financing_principal_balance": "0.00",
+            "cumulative_housing_cost": "78.00"
+          }
+        },
+        {
+          "month": 60,
+          "expected": {
+            "cash": "18422.00",
+            "liquid_financial_assets": "0.00",
+            "consortium_credit_right_balance": "0.00",
+            "property_value": "1500.00",
+            "total_liabilities": "0.00",
+            "liquidity": "18422.00",
+            "home_equity": "1500.00",
+            "net_worth": "19922.00",
+            "cumulative_housing_cost": "78.00"
+          }
+        }
+      ]
+    },
+    "price_basic": {
+      "input_classification": {
+        "comparison_opening_cash": "observed_data",
+        "property_price": "contractual_data",
+        "cash_down_payment": "observed_data",
+        "principal": "contractual_data",
+        "term_months": "contractual_data",
+        "effective_monthly_rate": "contractual_data"
+      },
+      "inputs": {
+        "property_price": "1500.00",
+        "cash_down_payment": "300.00",
+        "principal": "1200.00",
+        "term_months": 12,
+        "effective_monthly_rate": "0.01"
+      },
+      "checkpoints": [
+        {
+          "event": "month_0_purchase",
+          "expected": {
+            "cash": "19700.00",
+            "property_value": "1500.00",
+            "financing_principal_balance": "1200.00"
+          }
+        },
+        {
+          "month": 1,
+          "expected": {
+            "interest": "12.00",
+            "amortization": "94.62",
+            "payment": "106.62",
+            "cash": "19593.38",
+            "financing_principal_balance": "1105.38",
+            "nonrecoverable_housing_cost": "12.00",
+            "cumulative_housing_cost": "12.00"
+          }
+        },
+        {
+          "month": 12,
+          "expected": {
+            "interest": "1.06",
+            "amortization": "105.54",
+            "payment": "106.60",
+            "financing_principal_balance": "0.00",
+            "cumulative_housing_cost": "79.42"
+          }
+        },
+        {
+          "month": 60,
+          "expected": {
+            "cash": "18420.58",
+            "liquid_financial_assets": "0.00",
+            "consortium_credit_right_balance": "0.00",
+            "property_value": "1500.00",
+            "total_liabilities": "0.00",
+            "liquidity": "18420.58",
+            "home_equity": "1500.00",
+            "net_worth": "19920.58",
+            "cumulative_housing_cost": "79.42"
+          }
+        }
+      ]
+    },
+    "consortium_credit_right": {
+      "input_classification": {
+        "comparison_opening_cash": "observed_data",
+        "credit_letter": "contractual_data",
+        "term_months": "contractual_data",
+        "contemplation_month": "projected_assumption",
+        "monthly_schedule": "contractual_data",
+        "property_purchase_event": "projected_assumption"
+      },
+      "inputs": {
+        "credit_letter": "1000.00",
+        "term_months": 10,
+        "contemplation_month": 4,
+        "property_purchase_event": true,
+        "monthly_schedule": [
+          { "month": 1, "credit_component": "100.00", "administration_fee": "10.00" },
+          { "month": 2, "credit_component": "100.00", "administration_fee": "10.00" },
+          { "month": 3, "credit_component": "100.00", "administration_fee": "10.00" },
+          { "month": 4, "credit_component": "100.00", "administration_fee": "10.00" },
+          { "month": 5, "credit_component": "100.00", "administration_fee": "10.00" },
+          { "month": 6, "credit_component": "100.00", "administration_fee": "10.00" },
+          { "month": 7, "credit_component": "100.00", "administration_fee": "10.00" },
+          { "month": 8, "credit_component": "100.00", "administration_fee": "10.00" },
+          { "month": 9, "credit_component": "100.00", "administration_fee": "10.00" },
+          { "month": 10, "credit_component": "100.00", "administration_fee": "10.00" }
+        ]
+      },
+      "checkpoints": [
+        {
+          "month": 1,
+          "expected": {
+            "cash": "19890.00",
+            "consortium_credit_right_balance": "100.00",
+            "property_value": "0.00",
+            "consortium_credit_obligation_balance": "0.00",
+            "recoverable_transfer": "100.00",
+            "nonrecoverable_housing_cost": "10.00",
+            "net_worth": "19990.00"
+          }
+        },
+        {
+          "month": 4,
+          "event": "contemplation_after_monthly_contribution",
+          "expected": {
+            "cash": "19560.00",
+            "consortium_credit_right_balance": "0.00",
+            "property_value": "1000.00",
+            "consortium_credit_obligation_balance": "600.00",
+            "recoverable_transfer": "100.00",
+            "nonrecoverable_housing_cost": "10.00",
+            "cumulative_housing_cost": "40.00",
+            "home_equity": "400.00",
+            "net_worth": "19960.00"
+          }
+        },
+        {
+          "month": 5,
+          "expected": {
+            "cash": "19450.00",
+            "consortium_credit_right_balance": "0.00",
+            "property_value": "1000.00",
+            "consortium_credit_obligation_balance": "500.00",
+            "recoverable_transfer": "100.00",
+            "nonrecoverable_housing_cost": "10.00",
+            "home_equity": "500.00",
+            "net_worth": "19950.00"
+          }
+        },
+        {
+          "month": 60,
+          "expected": {
+            "cash": "18900.00",
+            "liquid_financial_assets": "0.00",
+            "consortium_credit_right_balance": "0.00",
+            "property_value": "1000.00",
+            "total_liabilities": "0.00",
+            "liquidity": "18900.00",
+            "home_equity": "1000.00",
+            "net_worth": "19900.00",
+            "cumulative_housing_cost": "100.00"
+          }
+        }
+      ]
+    },
+    "rent_plus_investment": {
+      "input_classification": {
+        "comparison_opening_cash": "observed_data",
+        "starting_monthly_rent": "observed_data",
+        "effective_annual_rent_adjustment": "projected_assumption",
+        "first_rent_adjustment_month": "contractual_data",
+        "initial_invested_capital": "observed_data",
+        "monthly_contribution": "projected_assumption",
+        "effective_monthly_net_return": "projected_assumption"
+      },
+      "inputs": {
+        "starting_monthly_rent": "100.00",
+        "effective_annual_rent_adjustment": "0.10",
+        "first_rent_adjustment_month": 13,
+        "initial_invested_capital": "300.00",
+        "monthly_contribution": "50.00",
+        "effective_monthly_net_return": "0.01"
+      },
+      "checkpoints": [
+        {
+          "month": 1,
+          "expected": {
+            "rent": "100.00",
+            "investment_return": "3.00",
+            "cash": "19550.00",
+            "liquid_financial_assets": "353.00",
+            "nonrecoverable_housing_cost": "100.00",
+            "cumulative_housing_cost": "100.00",
+            "liquidity": "19903.00",
+            "net_worth": "19903.00"
+          }
+        },
+        {
+          "month": 13,
+          "event": "first_annual_rent_adjustment",
+          "expected": {
+            "rent": "110.00",
+            "investment_return": "9.72",
+            "cash": "17740.00",
+            "liquid_financial_assets": "1031.90",
+            "cumulative_housing_cost": "1310.00",
+            "liquidity": "18771.90",
+            "net_worth": "18771.90"
+          }
+        },
+        {
+          "month": 60,
+          "expected": {
+            "rent": "146.41",
+            "investment_return": "45.33",
+            "cash": "9373.88",
+            "liquid_financial_assets": "4628.55",
+            "property_value": "0.00",
+            "total_liabilities": "0.00",
+            "liquidity": "14002.43",
+            "net_worth": "14002.43",
+            "cumulative_housing_cost": "7326.12"
+          }
+        }
+      ]
+    }
+  }
+}

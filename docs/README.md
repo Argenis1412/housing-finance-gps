@@ -20,9 +20,17 @@ become responsible for all of them.
 | `process/` | Delivery, review, QA, commit, and PR rules. | Change when the engineering process itself changes. |
 | `context/` | Current state, historical reference, and discoveries. | Keep current state concise; keep discoveries append-only. |
 | `adr/` | Accepted architectural decisions and their rationale. | Add or supersede ADRs; do not silently rewrite accepted history. |
+| `specifications/` | Accepted contract-level documentation and synthetic validation references. | Link to the owning product or ADR decision; do not add implementation code. |
+| `fixtures/` | Synthetic-only deterministic regression inputs and expected checkpoints. | Never place private reference-case material here. |
 
 ## Anti-duplication rule
 
 Link to a canonical decision instead of copying it. If two documents must
 mention the same rule, one owns the full definition and the other contains a
 short summary plus a link.
+
+## Accepted specifications
+
+- [Reference-case governance and provenance](specifications/reference-case-governance.md)
+- [Milestone 0 financial contracts](specifications/financial-contracts.md)
+- [Synthetic regression reference and QA baseline](specifications/milestone-0-synthetic-reference-and-qa.md)
