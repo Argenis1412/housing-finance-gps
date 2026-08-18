@@ -68,7 +68,13 @@ After the reference case succeeds, the application may be tested privately with 
 
 ### 4.2 Reference-case record
 
-The repository must contain a sanitized fixture or document with:
+The real reference case is a private, local-only acceptance record. It must
+not enter source control, CI inputs, logs, public fixtures, or shared exports.
+The owner retains the complete private record and can reproduce its validated
+result locally under the governance contract in
+[reference-case governance](../specifications/reference-case-governance.md).
+
+The private record contains:
 
 - household net income;
 - essential and discretionary monthly expenses;
@@ -85,7 +91,10 @@ The repository must contain a sanitized fixture or document with:
 - base, favorable, and adverse scenarios;
 - expected outputs independently reviewed for the supported calculations.
 
-No directly identifying personal information belongs in source control.
+The repository contains only a redacted validation attestation and synthetic
+regression fixtures. Those artifacts may identify contract and version
+metadata, but never real financial values, direct identifiers, proposal
+documents, or combinations that can re-identify the household.
 
 ## 5. MVP scope
 
@@ -435,6 +444,13 @@ A new engine version never rewrites a historical result. A user may recalculate 
 
 Changes that alter results require regression cases, a changelog entry, and a semantic-versioning decision. A change in an external value is a new data snapshot and is not automatically a new engine version.
 
+Private reference-case validation adds a provenance boundary: the complete
+reproducible envelope stays local, while Git stores only a redacted,
+root-cosigned attestation. The attestation records the immutable validator
+keyring manifest used at acceptance; it does not expose or permit external
+reconstruction of private inputs. See
+[reference-case governance](../specifications/reference-case-governance.md).
+
 ### 9.4 Input classification
 
 | Category | Example | Required treatment |
@@ -585,6 +601,12 @@ The MVP must:
 - use transport encryption outside local development;
 - keep secrets outside the repository.
 
+The real reference case is governed separately from synthetic regression data.
+Its complete envelope, commitment secret, and signing private keys remain
+outside the repository. Redacted attestations and signed keyring manifests are
+the only reference-case provenance artifacts permitted in Git. This boundary
+does not claim that an external reviewer can reconstruct private inputs.
+
 The product must clearly state that it is a decision-support simulation and not a binding offer or regulated professional recommendation.
 
 ## 16. Engineering discipline
@@ -682,7 +704,7 @@ The MVP is accepted only when all of the following are true:
 
 ### Milestone 0 — Contracts and reference case
 
-- sanitize and document the real reference case;
+- establish private reference-case governance and redacted provenance;
 - define supported inputs and outputs;
 - define monetary, rate, period, and rounding conventions;
 - create the initial ADRs;
