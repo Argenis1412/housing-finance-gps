@@ -279,6 +279,12 @@ Open every pull request as a draft when the work is finished. Never mark a
 pull request ready or merge it without explicit user authorization; technical
 readiness does not grant that authorization.
 
+When work for an issue is complete on its issue-numbered branch, the draft
+pull-request description must include that issue's GitHub closing reference,
+for example `Closes #123`. The issue remains open while the pull request is a
+draft and closes when the pull request is merged. This keeps issue status
+current and prevents duplicate work items.
+
 ## 12. Optional mechanical review-plan gate
 
 The `.project/review-plan.json` gate is reserved for Track C or other
