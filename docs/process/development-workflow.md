@@ -259,6 +259,12 @@ Use Conventional Commits in English:
 <type>(<scope>): <message>
 ```
 
+When a commit contains a relevant change, include a brief commit body that
+explains what changed and why so its purpose remains understandable without
+opening the pull request. Relevant changes include behavior, contracts,
+financial rules, privacy, security, data, architecture, and other material
+decisions. Purely mechanical or trivial changes may omit the body.
+
 The pull-request description must include:
 
 - summary and motivation;
@@ -269,8 +275,15 @@ The pull-request description must include:
 - risks, limitations, and follow-up exclusions;
 - calculation or contract version impact when applicable.
 
-Open pull requests as drafts. Technical readiness does not authorize marking
-a pull request ready or merging it.
+Open every pull request as a draft when the work is finished. Never mark a
+pull request ready or merge it without explicit user authorization; technical
+readiness does not grant that authorization.
+
+When work for an issue is complete on its issue-numbered branch, the draft
+pull-request description must include that issue's GitHub closing reference,
+for example `Closes #123`. The issue remains open while the pull request is a
+draft and closes when the pull request is merged. This keeps issue status
+current and prevents duplicate work items.
 
 ## 12. Optional mechanical review-plan gate
 
