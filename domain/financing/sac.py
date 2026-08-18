@@ -120,10 +120,17 @@ def normalize_sac_request(request: SACRequest) -> NormalizedSACInput | DomainFai
         return _invalid("principal must be positive")
     if normalized_money["cash_down_payment"].amount < _ZERO:
         return _invalid("cash_down_payment cannot be negative")
-    if (
-        normalized_money["property_price"].amount
-        != normalized_money["cash_down_payment"].amount + normalized_money["principal"].amount
+    with localcontext(
+        _context_for_amounts(
+            normalized_money["cash_down_payment"].amount,
+            normalized_money["principal"].amount,
+            extra_digits=2,
+        )
     ):
+        balance_matches = normalized_money["property_price"].amount == (
+            normalized_money["cash_down_payment"].amount + normalized_money["principal"].amount
+        )
+    if not balance_matches:
         return _invalid("property_price must equal cash_down_payment plus principal")
 
     return NormalizedSACInput(
@@ -138,7 +145,7 @@ def normalize_sac_request(request: SACRequest) -> NormalizedSACInput | DomainFai
 
 def calculate_sac(input_value: NormalizedSACInput) -> SACResult:
     """Calculate SAC postings and the 60-month comparison ledger purely."""
-    with localcontext(_CALCULATION_CONTEXT):
+    with localcontext(_calculation_context(input_value)):
         schedule = _build_contractual_schedule(input_value)
         ledger = _build_comparison_ledger(input_value, schedule)
     return SACResult(contractual_schedule=schedule, comparison_ledger=ledger)
@@ -313,6 +320,32 @@ def _ledger_row(
 
 def _post(amount: Decimal) -> Decimal:
     return amount.quantize(_CENT, rounding=ROUND_HALF_UP)
+
+
+def _context_for_amounts(*amounts: Decimal, extra_digits: int = 0) -> Context:
+    """Create a deterministic context wide enough for exact amount arithmetic."""
+    coefficient_digits = max((len(amount.as_tuple().digits) for amount in amounts), default=1)
+    context = _CALCULATION_CONTEXT.copy()
+    context.prec = max(context.prec, coefficient_digits + extra_digits)
+    return context
+
+
+def _calculation_context(input_value: NormalizedSACInput) -> Context:
+    """Size arithmetic precision from the closed, already-normalized input."""
+    money_digits = max(
+        len(value.amount.as_tuple().digits)
+        for value in (
+            input_value.comparison_opening_cash,
+            input_value.property_price,
+            input_value.cash_down_payment,
+            input_value.principal,
+        )
+    )
+    rate_digits = len(input_value.effective_monthly_rate.amount.as_tuple().digits)
+    term_digits = len(str(input_value.term_months))
+    context = _CALCULATION_CONTEXT.copy()
+    context.prec = max(context.prec, money_digits + rate_digits + term_digits + 8)
+    return context
 
 
 def _money(amount: Decimal) -> BRLMoney:

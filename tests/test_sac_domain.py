@@ -69,6 +69,20 @@ def test_normalization_rejects_invalid_exclusions_and_financing_relationships() 
         assert _failure(**changes).code == "invalid_input"
 
 
+def test_normalization_balance_check_ignores_callers_decimal_context() -> None:
+    request = _base_request(
+        comparison_opening_cash="1.01",
+        property_price="1.01",
+        cash_down_payment="0.01",
+        principal="1.00",
+        term_months=1,
+        rate_value="0",
+    )
+    with localcontext() as context:
+        context.prec = 2
+        assert not isinstance(normalize_sac_request(request), DomainFailure)
+
+
 def test_non_monthly_zero_is_classified_before_effective_rate_construction() -> None:
     normalized = _normalized(rate_value="0", rate_convention="effective_annual")
     assert normalized.effective_monthly_rate.amount == Decimal("0")
@@ -130,6 +144,20 @@ def test_sac_is_independent_of_callers_decimal_context() -> None:
         context.prec = 2
         context.rounding = ROUND_DOWN
         assert calculate_sac(normalized) == baseline
+
+
+def test_sac_accepts_large_two_fraction_amounts() -> None:
+    principal = "9" * 60 + ".00"
+    normalized = _normalized(
+        comparison_opening_cash=principal,
+        property_price=principal,
+        cash_down_payment="0.00",
+        principal=principal,
+        term_months=1,
+        rate_value="0",
+    )
+    result = calculate_sac(normalized)
+    assert result.contractual_schedule[-1].closing_principal_balance.as_string == "0.00"
 
 
 def test_schedule_and_ledger_have_separate_time_domains() -> None:
@@ -214,11 +242,13 @@ def load_tests(
         test_money_requires_exact_contract_representation,
         test_rate_and_term_validation_are_explicit,
         test_normalization_rejects_invalid_exclusions_and_financing_relationships,
+        test_normalization_balance_check_ignores_callers_decimal_context,
         test_non_monthly_zero_is_classified_before_effective_rate_construction,
         test_closed_exclusions_use_canonical_failure_categories,
         test_explicit_zero_exclusions_have_no_calculation_effect,
         test_sac_rounding_and_final_settlement,
         test_sac_is_independent_of_callers_decimal_context,
+        test_sac_accepts_large_two_fraction_amounts,
         test_schedule_and_ledger_have_separate_time_domains,
         test_synthetic_sac_fixture_checkpoints,
         test_outputs_are_deterministic_and_immutable,
