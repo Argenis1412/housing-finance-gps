@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from decimal import Decimal, ROUND_HALF_UP
+from decimal import Context, Decimal, ROUND_HALF_UP, localcontext
 from typing import Literal
 
 from domain.values import BRLMoney, DeclaredRate, DomainFailure, EffectiveMonthlyRate
@@ -13,6 +13,7 @@ IndexationDeclaration = Literal["not_requested", "documented_zero", "requested_n
 _CENT = Decimal("0.01")
 _ZERO = Decimal("0.00")
 _COMPARISON_MONTHS = 60
+_CALCULATION_CONTEXT = Context(prec=50, rounding=ROUND_HALF_UP)
 
 
 @dataclass(frozen=True, slots=True)
@@ -137,8 +138,9 @@ def normalize_sac_request(request: SACRequest) -> NormalizedSACInput | DomainFai
 
 def calculate_sac(input_value: NormalizedSACInput) -> SACResult:
     """Calculate SAC postings and the 60-month comparison ledger purely."""
-    schedule = _build_contractual_schedule(input_value)
-    ledger = _build_comparison_ledger(input_value, schedule)
+    with localcontext(_CALCULATION_CONTEXT):
+        schedule = _build_contractual_schedule(input_value)
+        ledger = _build_comparison_ledger(input_value, schedule)
     return SACResult(contractual_schedule=schedule, comparison_ledger=ledger)
 
 

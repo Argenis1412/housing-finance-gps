@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import FrozenInstanceError
-from decimal import Decimal
+from decimal import Decimal, ROUND_DOWN, localcontext
 import json
 from pathlib import Path
 import unittest
@@ -57,6 +57,18 @@ def test_rate_and_term_validation_are_explicit() -> None:
         assert _failure(**changes).code == "invalid_input"
 
 
+def test_normalization_rejects_invalid_exclusions_and_financing_relationships() -> None:
+    for changes in (
+        {"transaction_cost_amount": "1.0"},
+        {"indexation": "unknown"},
+        {"property_price": "0.00", "cash_down_payment": "0.00", "principal": "0.00"},
+        {"property_price": "300.00", "cash_down_payment": "300.00", "principal": "0.00"},
+        {"property_price": "100.00", "cash_down_payment": "-1.00", "principal": "101.00"},
+        {"cash_down_payment": "301.00"},
+    ):
+        assert _failure(**changes).code == "invalid_input"
+
+
 def test_non_monthly_zero_is_classified_before_effective_rate_construction() -> None:
     normalized = _normalized(rate_value="0", rate_convention="effective_annual")
     assert normalized.effective_monthly_rate.amount == Decimal("0")
@@ -103,6 +115,21 @@ def test_sac_rounding_and_final_settlement() -> None:
     assert result.contractual_schedule[0].amortization.as_string == "3.33"
     assert result.contractual_schedule[-1].amortization.as_string == "3.34"
     assert result.contractual_schedule[-1].closing_principal_balance.as_string == "0.00"
+
+
+def test_sac_is_independent_of_callers_decimal_context() -> None:
+    normalized = _normalized(
+        property_price="10.00",
+        cash_down_payment="0.00",
+        principal="10.00",
+        term_months=3,
+        rate_value="0.10",
+    )
+    baseline = calculate_sac(normalized)
+    with localcontext() as context:
+        context.prec = 2
+        context.rounding = ROUND_DOWN
+        assert calculate_sac(normalized) == baseline
 
 
 def test_schedule_and_ledger_have_separate_time_domains() -> None:
@@ -168,6 +195,13 @@ def test_outputs_are_deterministic_and_immutable() -> None:
         pass
     else:
         raise AssertionError("result collections must be immutable")
+    failure = _failure(principal="1.0")
+    try:
+        failure.code = "unsupported_rule"  # type: ignore[misc]
+    except FrozenInstanceError:
+        pass
+    else:
+        raise AssertionError("domain failures must be immutable")
 
 
 def load_tests(
@@ -179,10 +213,12 @@ def load_tests(
     tests = (
         test_money_requires_exact_contract_representation,
         test_rate_and_term_validation_are_explicit,
+        test_normalization_rejects_invalid_exclusions_and_financing_relationships,
         test_non_monthly_zero_is_classified_before_effective_rate_construction,
         test_closed_exclusions_use_canonical_failure_categories,
         test_explicit_zero_exclusions_have_no_calculation_effect,
         test_sac_rounding_and_final_settlement,
+        test_sac_is_independent_of_callers_decimal_context,
         test_schedule_and_ledger_have_separate_time_domains,
         test_synthetic_sac_fixture_checkpoints,
         test_outputs_are_deterministic_and_immutable,
