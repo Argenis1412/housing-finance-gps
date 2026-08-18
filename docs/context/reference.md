@@ -32,7 +32,6 @@ reopened.
 | --- | --- | ---: | --- |
 | No application scaffold | Repository | Expected | Milestone 0 precedes implementation. |
 | QA commands not configured | Repository | Expected | Select with the Python and TypeScript toolchains. |
-| Git working tree unavailable | Repository | High for delivery workflow | Resolve before enforcing branches, commits, or review-plan admission. |
 
 ## Failed approaches
 

@@ -11,13 +11,15 @@
   accumulating capital.
 - **Delivery state:** Pre-v1 specification and foundation phase. No
   application implementation or configured QA toolchain is present yet.
-- **Repository state:** The current directory is not recognized as a Git
-  working tree. Branch, issue, commit, and pull-request workflow cannot be
-  enforced until repository initialization or restoration is resolved.
-- **Architecture:** Product direction is approved; implementation-level
+- **Repository state:** Git is available. Work follows the issue-first,
+  issue-numbered-branch, draft-pull-request workflow in the development
+  process.
+- **Architecture:** Product direction is approved. Reference-case governance
+  and simulation provenance are documented in ADRs; remaining implementation
   decisions still require ADRs.
-- **Current priority:** Complete Milestone 0 contracts and the anonymized
-  reference-case specification before scaffolding the engine or frontend.
+- **Current priority:** Complete Milestone 0 reference-case governance and
+  provenance before financial contracts, synthetic fixtures, or application
+  scaffolding.
 
 ## Approved direction
 
@@ -27,8 +29,9 @@
 - Next.js and TypeScript provide a polished, accessible, independently
   deployable frontend.
 - SQLite is the planned private-MVP persistence layer.
-- The reference case is one real family decision represented without direct
-  identifiers.
+- The reference case is one real family decision held locally as private
+  acceptance evidence; Git contains only redacted provenance and synthetic
+  fixtures.
 - Deterministic explanations precede any language-model integration.
 - The MVP does not pursue commercial validation, distribution, monetization,
   bank integrations, PDF/OCR ingestion, or complete Brazilian rule coverage.

@@ -36,7 +36,8 @@ Use [0000-template.md](0000-template.md). Every accepted ADR states:
 
 | ADR | Status | Decision |
 | --- | --- | --- |
-| _None yet_ | | |
+| [ADR-0001](0001-private-reference-case-governance.md) | Accepted | Keep the real acceptance case private and store only redacted provenance in Git. |
+| [ADR-0002](0002-simulation-provenance-and-historical-verification.md) | Accepted | Bind private envelopes to root-cosigned, immutable-manifest attestations. |
 
 Do not create speculative ADRs merely to fill the initial list. Write each
 record when its decision is required for an approved work item.
