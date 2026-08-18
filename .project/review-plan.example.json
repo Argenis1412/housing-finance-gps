@@ -1,0 +1,13 @@
+{
+  "_comment": "Rename to review-plan.json and this must be the ENTIRE content of the branch's first commit — nothing else changes in that commit.",
+  "allowed_path_patterns": [
+    "src/feature_x/**",
+    "tests/test_feature_x.py"
+  ],
+  "allowed_operations": [
+    { "pattern": "src/feature_x/**", "operations": ["modify", "create"] },
+    { "pattern": "tests/test_feature_x.py", "operations": ["modify", "create"] }
+  ],
+  "max_changed_files": 6,
+  "max_changed_lines": 250
+}

@@ -1,0 +1,25 @@
+# Local Claude Code settings and machine-specific overrides
+.claude/settings.local.json
+
+# Python caches and virtual environments
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+
+# Node.js and Next.js build output
+node_modules/
+.next/
+out/
+
+# Local environment files
+.env
+.env.*
+!.env.example
+
+# Local databases and generated artifacts
+*.sqlite3
+*.db
+coverage/
+dist/
+build/

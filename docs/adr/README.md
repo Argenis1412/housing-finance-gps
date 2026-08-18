@@ -1,0 +1,42 @@
+# Architecture Decision Records
+
+ADRs document accepted architecture decisions that are difficult or costly
+to reverse. The [product vision](../product/vision.md) identifies the initial
+decisions that require ADRs, but it does not replace their implementation
+rationale.
+
+## Status values
+
+- `Proposed`
+- `Accepted`
+- `Superseded by ADR-NNNN`
+- `Rejected`
+
+## Naming
+
+```text
+NNNN-short-kebab-case-title.md
+```
+
+Numbers are sequential and never reused.
+
+## Required content
+
+Use [0000-template.md](0000-template.md). Every accepted ADR states:
+
+- the concrete context and forces;
+- the decision;
+- alternatives considered;
+- positive and negative consequences;
+- compatibility or migration impact;
+- verification evidence;
+- decisions intentionally left open.
+
+## Index
+
+| ADR | Status | Decision |
+| --- | --- | --- |
+| _None yet_ | | |
+
+Do not create speculative ADRs merely to fill the initial list. Write each
+record when its decision is required for an approved work item.
