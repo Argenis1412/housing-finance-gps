@@ -25,6 +25,16 @@ The MVP compares strategies with different contractual mechanics. Without one cu
 
 Adopt option 3. Financial contracts use nominal BRL decimal strings, one-based monthly periods, effective monthly financing and capital-return rates, effective annual rent adjustment, and ROUND_HALF_UP posted centavo ledger values. The prior posted balance is authoritative for the next period.
 
+SAC and Price share one strategy-neutral financing request and normalized-input
+boundary. For Price, the accepted principal and effective monthly rate are
+converted to exact rational operands before the regular installment is rounded.
+The non-zero-rate formula and the zero-rate principal/term formula therefore
+produce one exact pre-posting amount; `ROUND_HALF_UP` is applied once to the
+regular installment. Monthly Price interest is posted from the opening posted
+balance and exact rate; non-final amortization is posted payment minus posted
+interest. No caller Decimal context or intermediate Decimal precision may alter
+a Price posted amount.
+
 The common ledger defines mutually exclusive financing and consortium credit liabilities, property and credit-right assets, cash, liquid assets, and non-recoverable housing cost. The full contract is in [financial contracts](../specifications/financial-contracts.md).
 
 ## Consequences
@@ -46,12 +56,16 @@ The common ledger defines mutually exclusive financing and consortium credit lia
 
 ## Compatibility and migration
 
-None. No financial implementation or stored simulation exists.
+SAC is already implemented against this contract. Its public Python
+compatibility symbols and behavior remain unchanged while its common financing
+boundary moves to a neutral owner. Price adds the accepted financing behavior;
+no stored simulation, API, or wire contract exists.
 
 ## Verification
 
 - Review SAC and Price row order against the contract.
-- Later add independent reference schedules, invariants, and boundary tests.
+- Verify Price reference schedules, exact rational half-cent boundaries,
+  caller-context independence, invariants, and boundary tests.
 - Review ledger conservation around financing purchase and consortium contemplation transitions.
 
 ## Deferred decisions
