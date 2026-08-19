@@ -8,7 +8,13 @@ import json
 from pathlib import Path
 import unittest
 
-from domain.financing.sac import SACRequest, calculate_sac, normalize_sac_request
+from domain.financing.sac import (
+    SACRequest,
+    calculate_sac,
+    calculate_sac_v2,
+    normalize_sac_request,
+    normalize_sac_request_v2,
+)
 from domain.values import BRLMoney, DomainFailure
 
 
@@ -37,6 +43,18 @@ def _normalized(**changes: object):
 
 def _failure(**changes: object) -> DomainFailure:
     result = normalize_sac_request(_base_request(**changes))
+    assert isinstance(result, DomainFailure)
+    return result
+
+
+def _normalized_v2(**changes: object):
+    result = normalize_sac_request_v2(_base_request(**changes))
+    assert not isinstance(result, DomainFailure)
+    return result
+
+
+def _failure_v2(**changes: object) -> DomainFailure:
+    result = normalize_sac_request_v2(_base_request(**changes))
     assert isinstance(result, DomainFailure)
     return result
 
@@ -287,6 +305,29 @@ def test_outputs_are_deterministic_and_immutable() -> None:
         raise AssertionError("domain failures must be immutable")
 
 
+def test_v2_fixed_fee_is_explicit_and_nonrecoverable() -> None:
+    result = calculate_sac_v2(_normalized_v2(fee_amount="2.50", term_months=2, rate_value="0"))
+    first = result.contractual_schedule[0]
+    assert first.fee.as_string == "2.50"
+    assert first.payment.as_string == "602.50"
+    assert result.comparison_ledger[1].cash.as_string == "19097.50"
+    assert result.comparison_ledger[1].nonrecoverable_housing_cost.as_string == "2.50"
+    assert result.comparison_ledger[1].financing_principal_balance.as_string == "600.00"
+
+
+def test_v2_absent_and_zero_fee_preserve_financial_values() -> None:
+    absent = calculate_sac_v2(_normalized_v2())
+    zero = calculate_sac_v2(_normalized_v2(fee_amount="0.00"))
+    assert absent == zero
+    assert all(row.fee.as_string == "0.00" for row in absent.contractual_schedule)
+
+
+def test_v2_fee_validation_is_explicit_and_v1_remains_rejection_boundary() -> None:
+    assert _failure_v2(fee_amount="-1.00").code == "invalid_input"
+    assert _failure_v2(fee_amount="1.0").code == "invalid_input"
+    assert _failure(fee_amount="1.00").code == "unsupported_contract_clause"
+
+
 def load_tests(
     loader: unittest.TestLoader,
     standard_tests: unittest.TestSuite,
@@ -309,5 +350,8 @@ def load_tests(
         test_sac_schedule_and_ledger_invariants_hold_for_every_posted_period,
         test_synthetic_sac_fixture_checkpoints,
         test_outputs_are_deterministic_and_immutable,
+        test_v2_fixed_fee_is_explicit_and_nonrecoverable,
+        test_v2_absent_and_zero_fee_preserve_financial_values,
+        test_v2_fee_validation_is_explicit_and_v1_remains_rejection_boundary,
     )
     return unittest.TestSuite(unittest.FunctionTestCase(test) for test in tests)
