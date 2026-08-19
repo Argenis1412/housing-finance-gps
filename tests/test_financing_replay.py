@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import FrozenInstanceError, replace
+from decimal import Decimal
 import json
 import unittest
 
@@ -119,6 +120,37 @@ def test_v2_codec_rejects_v1_shaped_success_evidence() -> None:
     del outcome["trace"]["contractual_schedule"][0]["fee"]
     malformed = replace(envelope, sealed_outcome_jcs=replay_v2.canonical_json(outcome))
     _incompatible(malformed)
+
+
+def test_v2_invalid_fee_failure_is_replayable_and_tampering_fails_closed() -> None:
+    envelope = _v2_envelope(fee_amount="-1.00")
+    assert json.loads(envelope.sealed_outcome_jcs) == {
+        "code": "invalid_input",
+        "detail": "fee_amount cannot be negative",
+        "kind": "failure",
+    }
+    assert isinstance(replay_financing(envelope), ReplayVerification)
+
+    outcome = json.loads(envelope.sealed_outcome_jcs)
+    outcome["code"] = "unsupported_contract_clause"
+    _incompatible(replace(envelope, sealed_outcome_jcs=replay_v2.canonical_json(outcome)))
+
+
+def test_v2_term_boundary_preserves_full_schedule_and_sixty_month_ledger() -> None:
+    for strategy in ("sac", "price"):
+        envelope = _v2_envelope(strategy, fee_amount="2.50", term_months=600)
+        outcome = json.loads(envelope.sealed_outcome_jcs)
+        zero_outcome = json.loads(
+            _v2_envelope(strategy, fee_amount="0.00", term_months=600).sealed_outcome_jcs
+        )
+        assert len(outcome["trace"]["contractual_schedule"]) == 600
+        assert len(outcome["trace"]["comparison_ledger"]) == 61
+        assert outcome["trace"]["contractual_schedule"][599]["fee"] == "2.50"
+        assert outcome["trace"]["comparison_ledger"][60]["month"] == 60
+        fee_cash = Decimal(outcome["trace"]["comparison_ledger"][60]["cash"])
+        zero_cash = Decimal(zero_outcome["trace"]["comparison_ledger"][60]["cash"])
+        assert zero_cash - fee_cash == Decimal("150.00")
+        assert isinstance(replay_financing(envelope), ReplayVerification)
 
 
 def test_rate_projection_is_canonical_and_nonmonthly_zero_is_unsupported() -> None:

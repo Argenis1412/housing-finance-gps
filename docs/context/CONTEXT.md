@@ -91,7 +91,7 @@ those rules.
 ## QA status
 
 The financing domain has a standard-library unit-test suite: `uv run --offline
---no-project python -m unittest discover -s tests -t . -v` passes 53
+--no-project python -m unittest discover -s tests -t . -v` passes 59
 synthetic-only tests. The suite protects monetary and rate validation,
 unsupported-case classification, posted-centavo SAC rounding and settlement,
 Price exact-rational installments, posted-centavo rounding and settlement,
@@ -100,8 +100,9 @@ synthetic fixture checkpoints, synthetic unsupported-clause parity, schedule
 and ledger invariants, rent-plus month-0 allocation and feasibility,
 determinism, immutability, canonical versioned financing replay, full-trace
 equivalence, historical positive-fee failure preservation, and the v1
-600-month schedule boundary, explicit v2 fee posting, v2 financial parity for
-absent and zero fees, and version-specific replay codecs.
+600-month schedule boundary, explicit and cumulative v2 fee posting, v2
+financial parity for absent and zero fees, independent SAC and Price centavo
+checkpoints, and version-specific replay codecs.
 
 Ruff 0.16.0 is configured for Python 3.13 with the conservative `E4`, `E7`,
 `E9`, and `F` rule selection. GitHub Actions runs that lint command and the

@@ -313,6 +313,11 @@ def test_v2_fixed_fee_is_explicit_and_nonrecoverable() -> None:
     assert result.comparison_ledger[1].cash.as_string == "19097.50"
     assert result.comparison_ledger[1].nonrecoverable_housing_cost.as_string == "2.50"
     assert result.comparison_ledger[1].financing_principal_balance.as_string == "600.00"
+    assert result.comparison_ledger[2].cash.as_string == "18495.00"
+    assert result.comparison_ledger[2].cumulative_housing_cost.as_string == "5.00"
+    assert result.comparison_ledger[3].cash.as_string == "18495.00"
+    assert result.comparison_ledger[3].nonrecoverable_housing_cost.as_string == "0.00"
+    assert result.comparison_ledger[3].cumulative_housing_cost.as_string == "5.00"
 
 
 def test_v2_absent_and_zero_fee_preserve_financial_values() -> None:
@@ -326,6 +331,63 @@ def test_v2_fee_validation_is_explicit_and_v1_remains_rejection_boundary() -> No
     assert _failure_v2(fee_amount="-1.00").code == "invalid_input"
     assert _failure_v2(fee_amount="1.0").code == "invalid_input"
     assert _failure(fee_amount="1.00").code == "unsupported_contract_clause"
+
+    signed_zero = calculate_sac_v2(_normalized_v2(fee_amount="-0.00"))
+    assert signed_zero == calculate_sac_v2(_normalized_v2(fee_amount="0.00"))
+    assert all(row.fee.as_string == "0.00" for row in signed_zero.contractual_schedule)
+
+
+def test_v2_sac_matches_independent_centavo_checkpoints() -> None:
+    result = calculate_sac_v2(
+        _normalized_v2(fee_amount="2.50", term_months=3, rate_value="0.01")
+    )
+    schedule = [
+        (
+            row.month,
+            row.interest.as_string,
+            row.amortization.as_string,
+            row.fee.as_string,
+            row.payment.as_string,
+            row.closing_principal_balance.as_string,
+        )
+        for row in result.contractual_schedule
+    ]
+    assert schedule == [
+        (1, "12.00", "400.00", "2.50", "414.50", "800.00"),
+        (2, "8.00", "400.00", "2.50", "410.50", "400.00"),
+        (3, "4.00", "400.00", "2.50", "406.50", "0.00"),
+    ]
+    ledger = result.comparison_ledger
+    assert (ledger[1].cash.as_string, ledger[1].cumulative_housing_cost.as_string) == (
+        "19285.50",
+        "14.50",
+    )
+    assert (ledger[3].cash.as_string, ledger[3].cumulative_housing_cost.as_string) == (
+        "18468.50",
+        "31.50",
+    )
+    assert (ledger[4].cash.as_string, ledger[4].cumulative_housing_cost.as_string) == (
+        "18468.50",
+        "31.50",
+    )
+
+
+def test_v2_outputs_are_context_independent_deterministic_and_immutable() -> None:
+    normalized = _normalized_v2(fee_amount="2.50")
+    expected = calculate_sac_v2(normalized)
+    assert calculate_sac_v2(normalized) == expected
+
+    with localcontext() as context:
+        context.prec = 2
+        context.rounding = ROUND_DOWN
+        assert calculate_sac_v2(normalized) == expected
+
+    try:
+        expected.contractual_schedule[0].fee = BRLMoney("0.00")  # type: ignore[misc]
+    except FrozenInstanceError:
+        pass
+    else:
+        raise AssertionError("v2 contractual rows must be immutable")
 
 
 def load_tests(
@@ -353,5 +415,7 @@ def load_tests(
         test_v2_fixed_fee_is_explicit_and_nonrecoverable,
         test_v2_absent_and_zero_fee_preserve_financial_values,
         test_v2_fee_validation_is_explicit_and_v1_remains_rejection_boundary,
+        test_v2_sac_matches_independent_centavo_checkpoints,
+        test_v2_outputs_are_context_independent_deterministic_and_immutable,
     )
     return unittest.TestSuite(unittest.FunctionTestCase(test) for test in tests)

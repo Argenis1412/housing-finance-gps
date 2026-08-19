@@ -76,16 +76,22 @@ def evaluate(raw_request_jcs: str, strategy: Strategy) -> str:
     ledger = trace["comparison_ledger"]
     for row in schedule:
         row["fee"] = fee.as_string
-        row["payment"] = _post(Decimal(row["payment"]) + fee.amount)
+        row["payment"] = _post(Fraction(row["payment"]) + Fraction(fee.amount))
     for row in ledger:
         month = row["month"]
-        if isinstance(month, int) and 1 <= month <= len(schedule):
-            cost = Decimal(row["nonrecoverable_housing_cost"]) + fee.amount
-            row["cash"] = _post(Decimal(row["cash"]) - fee.amount)
+        if not isinstance(month, int):
+            continue
+        posted_months = min(max(month, 0), len(schedule))
+        accumulated_fee = Fraction(fee.amount) * posted_months
+        if 1 <= month <= len(schedule):
+            cost = Fraction(row["nonrecoverable_housing_cost"]) + Fraction(fee.amount)
             row["nonrecoverable_housing_cost"] = _post(cost)
-            row["cumulative_housing_cost"] = _post(Decimal(row["cumulative_housing_cost"]) + fee.amount)
-            row["liquidity"] = row["cash"]
-            row["net_worth"] = _post(Decimal(row["net_worth"]) - fee.amount)
+        row["cash"] = _post(Fraction(row["cash"]) - accumulated_fee)
+        row["cumulative_housing_cost"] = _post(
+            Fraction(row["cumulative_housing_cost"]) + accumulated_fee
+        )
+        row["liquidity"] = row["cash"]
+        row["net_worth"] = _post(Fraction(row["net_worth"]) - accumulated_fee)
     normalized = dict(base["normalized_input"])
     normalized["fee_amount"] = fee.as_string
     return canonical_json({"kind": "success", "normalized_input": normalized, "trace": trace})
@@ -130,6 +136,8 @@ def _fee(raw_value: object) -> object:
         return _failure("invalid_input", "fee_amount must be an exact-two-fraction BRL string")
     if amount < _ZERO:
         return _failure("invalid_input", "fee_amount cannot be negative")
+    if amount.is_zero():
+        amount = _ZERO
     return _Money(amount)
 
 
@@ -142,7 +150,7 @@ class _Money:
         return format(self.amount, ".2f")
 
 
-def _post(amount: Decimal) -> str:
+def _post(amount: Decimal | Fraction) -> str:
     fraction = Fraction(amount)
     sign = -1 if fraction < 0 else 1
     fraction = abs(fraction) * 100
