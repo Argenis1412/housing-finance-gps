@@ -1,7 +1,7 @@
 # Milestone 0 Financial Contracts
 
 > Status: accepted Milestone 0 contract
-> Related ADRs: [ADR-0003](../adr/0003-money-rate-period-rounding-and-ledger.md), [ADR-0004](../adr/0004-backend-authoritative-financial-contracts.md)
+> Related ADRs: [ADR-0003](../adr/0003-money-rate-period-rounding-and-ledger.md), [ADR-0004](../adr/0004-backend-authoritative-financial-contracts.md), [ADR-0005](../adr/0005-financing-extension-admission-boundary.md), [ADR-0006](../adr/0006-versioned-financing-replay-contract.md)
 > Related governance: [reference-case governance](reference-case-governance.md)
 > Related issue: #5
 
@@ -180,7 +180,7 @@ restriction, and future-purchase declarations return
 
 The common ledger and comparison metrics stop after month 60. Financing schedules continue through term_months only to reconcile principal and financing totals; they do not extend common liquidity, home-equity, net-worth, or cumulative-cost comparisons beyond month 60.
 
-Every eventual simulation envelope retains engine_version, ruleset_version, and data_snapshot_id under the private-reference provenance boundary. The private envelope and redacted attestation rules are owned by [reference-case governance](reference-case-governance.md).
+Every eventual simulation envelope retains engine_version, ruleset_version, and data_snapshot_id under the private-reference provenance boundary. The private envelope and redacted attestation rules are owned by [reference-case governance](reference-case-governance.md). [ADR-0006](../adr/0006-versioned-financing-replay-contract.md) distinguishes a retained historical outcome from verifiable replay: replay must reexecute the selected historical schema, parser, and calculator against the canonical request and prove equivalence to the sealed outcome.
 
 ## Failure contract
 
@@ -206,8 +206,9 @@ remain accepted exclusions. Nonzero FGTS, subsidy, and tax requests remain
 
 Future support for correction or indexation, fees, or insurance requires the
 admission evidence in [ADR-0005](../adr/0005-financing-extension-admission-boundary.md)
-before implementation. A deterministic input representation alone does not
-admit a financial clause.
+and the replay contract in [ADR-0006](../adr/0006-versioned-financing-replay-contract.md)
+before implementation. A deterministic input representation or retained result
+alone does not admit a financial clause.
 
 Complete observed, contractual, rule, and projected-assumption classification
 for the real reference case belongs only to the schema-versioned private
