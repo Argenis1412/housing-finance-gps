@@ -81,7 +81,10 @@ def replay_financing(envelope: SimulationReplayEnvelope) -> ReplayVerification |
         replay_v1.validate_outcome(envelope.sealed_outcome_jcs)
     except (AttributeError, KeyError, TypeError, ValueError):
         return DomainFailure("incompatible_contract_version", "historical replay equivalence cannot be proven")
-    reproduced = handler(envelope.raw_request_jcs, envelope.strategy)
+    try:
+        reproduced = handler(envelope.raw_request_jcs, envelope.strategy)
+    except ValueError:
+        return DomainFailure("incompatible_contract_version", "historical replay equivalence cannot be proven")
     if reproduced.outcome_jcs != envelope.sealed_outcome_jcs:
         return DomainFailure("incompatible_contract_version", "historical replay equivalence cannot be proven")
     return ReplayVerification(envelope)
