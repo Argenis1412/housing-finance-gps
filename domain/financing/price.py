@@ -17,6 +17,7 @@ from domain.financing.contracts import (
     normalize_financing_request,
     post_decimal,
 )
+from domain.ledger import post_nonnegative_fraction
 from domain.values import DomainFailure
 
 
@@ -52,7 +53,7 @@ def _build_contractual_schedule(input_value: NormalizedPriceInput) -> tuple[Pric
     rate = _fraction(input_value.effective_monthly_rate.amount)
     regular_payment = _regular_payment(_fraction(input_value.principal.amount), rate, input_value.term_months)
     for month in range(1, input_value.term_months + 1):
-        interest = _post_fraction(_fraction(opening) * rate)
+        interest = post_nonnegative_fraction(_fraction(opening) * rate)
         if month == input_value.term_months:
             amortization = opening
             payment = post_decimal(interest + amortization)
@@ -76,19 +77,11 @@ def _build_contractual_schedule(input_value: NormalizedPriceInput) -> tuple[Pric
 
 def _regular_payment(principal: Fraction, rate: Fraction, term_months: int) -> Decimal:
     if rate == 0:
-        return _post_fraction(principal / term_months)
+        return post_nonnegative_fraction(principal / term_months)
     growth = (Fraction(1) + rate) ** term_months
-    return _post_fraction(principal * rate * growth / (growth - 1))
+    return post_nonnegative_fraction(principal * rate * growth / (growth - 1))
 
 
 def _fraction(value: Decimal) -> Fraction:
     numerator, denominator = value.as_integer_ratio()
     return Fraction(numerator, denominator)
-
-
-def _post_fraction(amount: Fraction) -> Decimal:
-    if amount < 0:
-        raise ValueError("Price posting amount cannot be negative")
-    cent_amount = amount * 100
-    posted_cents = (2 * cent_amount.numerator + cent_amount.denominator) // (2 * cent_amount.denominator)
-    return Decimal(posted_cents).scaleb(-2)

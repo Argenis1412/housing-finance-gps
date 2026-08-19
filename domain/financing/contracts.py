@@ -6,13 +6,19 @@ from dataclasses import dataclass
 from decimal import Context, Decimal, ROUND_HALF_UP, localcontext
 from typing import Literal
 
+from domain.ledger import (
+    COMPARISON_MONTHS as _COMPARISON_MONTHS,
+    ComparisonLedgerRow,
+    comparison_ledger_row,
+    money,
+    normalize_brl_money,
+    post_decimal,
+)
 from domain.values import BRLMoney, DeclaredRate, DomainFailure, EffectiveMonthlyRate
 
 
 IndexationDeclaration = Literal["not_requested", "documented_zero", "requested_nonzero"]
-_CENT = Decimal("0.01")
 _ZERO = Decimal("0.00")
-_COMPARISON_MONTHS = 60
 _CALCULATION_CONTEXT = Context(prec=50, rounding=ROUND_HALF_UP)
 
 
@@ -59,26 +65,6 @@ class FinancingContractualRow:
     amortization: BRLMoney
     payment: BRLMoney
     closing_principal_balance: BRLMoney
-
-
-@dataclass(frozen=True, slots=True)
-class ComparisonLedgerRow:
-    """One closing row in the fixed 60-month financing comparison domain."""
-
-    month: int
-    cash: BRLMoney
-    liquid_financial_assets: BRLMoney
-    consortium_credit_right_balance: BRLMoney
-    property_value: BRLMoney
-    financing_principal_balance: BRLMoney
-    consortium_credit_obligation_balance: BRLMoney
-    recoverable_transfer: BRLMoney
-    nonrecoverable_housing_cost: BRLMoney
-    total_liabilities: BRLMoney
-    home_equity: BRLMoney
-    liquidity: BRLMoney
-    net_worth: BRLMoney
-    cumulative_housing_cost: BRLMoney
 
 
 def normalize_financing_request(request: FinancingRequest) -> NormalizedFinancingInput | DomainFailure:
@@ -144,14 +130,17 @@ def build_financing_comparison_ledger(
     cash = post_decimal(input_value.comparison_opening_cash.amount - input_value.cash_down_payment.amount)
     cumulative_cost = _ZERO
     rows.append(
-        _ledger_row(
+        comparison_ledger_row(
             month=0,
             cash=cash,
+            liquid_financial_assets=_ZERO,
+            consortium_credit_right_balance=_ZERO,
             property_value=input_value.property_price.amount,
-            financing_balance=input_value.principal.amount,
+            financing_principal_balance=input_value.principal.amount,
+            consortium_credit_obligation_balance=_ZERO,
             recoverable_transfer=input_value.cash_down_payment.amount,
-            nonrecoverable_cost=_ZERO,
-            cumulative_cost=cumulative_cost,
+            nonrecoverable_housing_cost=_ZERO,
+            cumulative_housing_cost=cumulative_cost,
         )
     )
     for month in range(1, _COMPARISON_MONTHS + 1):
@@ -167,22 +156,20 @@ def build_financing_comparison_ledger(
             nonrecoverable_cost = _ZERO
         cumulative_cost = post_decimal(cumulative_cost + nonrecoverable_cost)
         rows.append(
-            _ledger_row(
+            comparison_ledger_row(
                 month=month,
                 cash=cash,
+                liquid_financial_assets=_ZERO,
+                consortium_credit_right_balance=_ZERO,
                 property_value=input_value.property_price.amount,
-                financing_balance=financing_balance,
+                financing_principal_balance=financing_balance,
+                consortium_credit_obligation_balance=_ZERO,
                 recoverable_transfer=recoverable_transfer,
-                nonrecoverable_cost=nonrecoverable_cost,
-                cumulative_cost=cumulative_cost,
+                nonrecoverable_housing_cost=nonrecoverable_cost,
+                cumulative_housing_cost=cumulative_cost,
             )
         )
     return tuple(rows)
-
-
-def post_decimal(amount: Decimal) -> Decimal:
-    """Post a finite monetary amount using the accepted centavo rule."""
-    return amount.quantize(_CENT, rounding=ROUND_HALF_UP)
 
 
 def calculation_context(input_value: NormalizedFinancingInput) -> Context:
@@ -211,16 +198,8 @@ def context_for_amounts(*amounts: Decimal, extra_digits: int = 0) -> Context:
     return context
 
 
-def money(amount: Decimal) -> BRLMoney:
-    """Create a posted BRL value from a calculated amount."""
-    return BRLMoney(format(post_decimal(amount), ".2f"))
-
-
 def _normalize_money(name: str, raw_value: object) -> BRLMoney | DomainFailure:
-    try:
-        return BRLMoney(raw_value)  # type: ignore[arg-type]
-    except ValueError:
-        return _invalid(f"{name} must be an exact-two-fraction BRL string")
+    return normalize_brl_money(name, raw_value)
 
 
 def _normalize_rate(raw_value: object, convention: object) -> EffectiveMonthlyRate | DomainFailure:
@@ -266,17 +245,6 @@ def _classify_exclusion_amount(name: str, raw_value: object, failure_code: Liter
     if money_value.amount == _ZERO:
         return None
     return DomainFailure(failure_code, f"{name} is not supported")
-
-
-def _ledger_row(*, month: int, cash: Decimal, property_value: Decimal, financing_balance: Decimal, recoverable_transfer: Decimal, nonrecoverable_cost: Decimal, cumulative_cost: Decimal) -> ComparisonLedgerRow:
-    liquid_assets = _ZERO
-    credit_right = _ZERO
-    consortium_obligation = _ZERO
-    total_liabilities = post_decimal(financing_balance + consortium_obligation)
-    home_equity = post_decimal(property_value - total_liabilities)
-    liquidity = post_decimal(cash + liquid_assets)
-    net_worth = post_decimal(cash + liquid_assets + credit_right + property_value - total_liabilities)
-    return ComparisonLedgerRow(month=month, cash=money(cash), liquid_financial_assets=money(liquid_assets), consortium_credit_right_balance=money(credit_right), property_value=money(property_value), financing_principal_balance=money(financing_balance), consortium_credit_obligation_balance=money(consortium_obligation), recoverable_transfer=money(recoverable_transfer), nonrecoverable_housing_cost=money(nonrecoverable_cost), total_liabilities=money(total_liabilities), home_equity=money(home_equity), liquidity=money(liquidity), net_worth=money(net_worth), cumulative_housing_cost=money(cumulative_cost))
 
 
 def _invalid(detail: str) -> DomainFailure:
