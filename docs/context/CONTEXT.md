@@ -1,6 +1,6 @@
 # Housing Finance GPS — Current Context
 
-> Last updated: August 18, 2026
+> Last updated: August 19, 2026
 > Read [AGENTS.md](../../AGENTS.md) before this document. This file describes
 > current repository reality, not future intent and not implementation history.
 
@@ -9,8 +9,10 @@
 - **Product:** A private Brazilian housing decision-support tool comparing
   SAC or Price financing, consortium scenarios, and renting while
   accumulating capital.
-- **Delivery state:** Milestone 0 documentation readiness is complete. No
-  application implementation or configured QA toolchain is present yet.
+- **Delivery state:** Milestone 0 documentation readiness is complete. PR #12
+  merged the first Milestone 1 slice and Issue #11 is closed: SAC is the sole
+  implemented financial behavior. No API, frontend, persistence, CI, or
+  dependency toolchain is configured.
 - **Repository state:** Git is available. Work follows the issue-first,
   issue-numbered-branch, draft-pull-request workflow in the development
   process.
@@ -18,8 +20,11 @@
   simulation provenance, financial conventions, and backend authority are
   documented in ADRs. A synthetic regression reference and a selected,
   unconfigured QA baseline complete Milestone 0 documentation.
-- **Current priority:** No implementation proposal is active. Any
-  application-scaffolding proposal remains approval-gated after Milestone 0.
+- **Current priority:** After this documentation synchronization pull request
+  is merged and explicit authorization is received, prepare the Track C
+  proposal for “Milestone 1.1 — deterministic Price and comparison-contract
+  foundation.” Do not create its branch or implementation files before that
+  gate.
 
 ## Approved direction
 
@@ -47,11 +52,18 @@ The canonical scope and acceptance criteria are in the
 | `docs/process/` | Development, review, approval, and QA workflow. |
 | `docs/context/` | Current state, history, open questions, and discoveries. |
 | `docs/adr/` | ADR guidance and future accepted architecture decisions. |
+| `domain/values.py` | Immutable BRL money and rate values plus canonical runtime failures for the implemented domain boundary. |
+| `domain/financing/sac.py` | Pure SAC request normalization, contractual schedule, and fixed 60-month comparison ledger. |
+| `tests/test_sac_domain.py` | Synthetic-only regression and boundary tests for the SAC implementation. |
 | `.claude/` | Claude-specific adapters that defer to repository-owned rules. |
 | `.project/` | Optional mechanical review-plan gate artifacts. |
 | `scripts/` | Optional workflow enforcement scripts; not application code. |
 
-No backend, frontend, domain, database, or test modules exist yet.
+The repository contains no FastAPI API, Next.js frontend, database,
+persistence, CI configuration, or dependency manifest. Price, shared
+comparison contracts and version envelope, consortium, rent-plus-investment,
+and eligibility rules remain unimplemented. Real financial and identifying
+data remain prohibited from source control.
 
 ## Active architecture invariants
 
@@ -61,9 +73,16 @@ those rules.
 
 ## QA status
 
-Concrete lint, formatting, type-checking, unit-test, contract-test, and
-browser-test commands are not configured yet. Milestone 0 selected and
-recorded their baseline in
+The SAC domain has a standard-library unit-test suite: `uv run --offline
+--no-project python -m unittest discover -s tests -t . -v` passes 13
+synthetic-only tests. The suite protects monetary and rate validation,
+unsupported-case classification, posted-centavo SAC rounding and settlement,
+separate schedule and ledger time domains, synthetic fixture checkpoints,
+determinism, and immutability.
+
+Linting, formatting, static type checking, contract tests, frontend tests,
+browser tests, package pinning, and CI remain unconfigured. Milestone 0
+selected and recorded their future baseline in
 [synthetic regression reference and QA baseline](../specifications/milestone-0-synthetic-reference-and-qa.md);
 configuration remains a future implementation work item.
 
