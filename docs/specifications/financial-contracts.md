@@ -81,7 +81,11 @@ Both SAC and Price require:
 - effective_monthly_rate: decimal rate greater than or equal to zero;
 - property_price and cash_down_payment for the month-0 purchase event.
 
-For the initial supported case, property_price equals cash_down_payment plus principal. FGTS, subsidies, transaction costs, taxes, insurance, fees, indexation, non-monthly rates, and extraordinary amortization are unsupported unless documented as zero.
+For the v1 supported case, property_price equals cash_down_payment plus
+principal. FGTS, subsidies, transaction costs, taxes, insurance, fees,
+indexation, non-monthly rates, and extraordinary amortization are unsupported
+unless documented as zero. The separately admitted v2 fixed monthly financing
+fee is defined below.
 
 At month 0, cash decreases by cash_down_payment, property_value increases by property_price, and financing_principal_balance becomes principal.
 
@@ -91,7 +95,9 @@ For each financing month, the opening balance is the prior posted closing financ
 
 1. Calculate and post interest from opening balance and effective monthly rate.
 2. Determine and post amortization.
-3. Post payment as interest plus amortization.
+3. For v1, post payment as interest plus amortization. For the admitted v2
+   fixed-fee contract, post the separate monthly fee and payment as interest
+   plus amortization plus fee.
 4. Post closing principal as opening balance minus amortization.
 
 Interest is the opening posted balance multiplied by the effective monthly rate,
@@ -197,7 +203,7 @@ The future versioned API maps these stable machine-readable categories to safe P
 
 ## Financing support admission boundary
 
-The implemented SAC and Price boundary supports only the fixed-principal,
+The implemented v1 SAC and Price boundary supports only the fixed-principal,
 effective-monthly-rate case defined above. A positive financing fee, insurance
 amount, transaction cost, extraordinary amortization, or requested nonzero
 indexation is an `unsupported_contract_clause`; explicit zero declarations
