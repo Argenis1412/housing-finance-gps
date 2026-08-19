@@ -31,7 +31,7 @@ reopened.
 | Item | File or area | Severity | Notes |
 | --- | --- | ---: | --- |
 | No application scaffold | Repository | Expected | Milestone 0 precedes implementation. |
-| QA commands not configured | Repository | Expected | Select with the Python and TypeScript toolchains. |
+| Broader QA toolchain | Repository | Expected | Minimal Ruff and GitHub Actions validation are configured; formatting, type checking, contract tests, frontend tests, browser tests, dependency review, and secret scanning remain deferred. |
 
 ## Failed approaches
 
@@ -77,9 +77,10 @@ Record dated audit results below.
   Deferred financial clauses remain explicitly owned by ADR-0005 and ADR-0006
   rather than being accumulated as unowned discoveries.
 - **QA determinism and usefulness:** The synthetic-only standard-library suite
-  passes 45 tests with the documented offline command. The audit found no
-  configured lint or CI; Issue #27 adds a minimal pinned Ruff check and
-  read-only validation workflow without expanding financial coverage.
+  passes 45 tests with the documented offline command. At the time of this
+  audit, no lint or CI was configured; Issue #27 subsequently added a minimal
+  pinned Ruff check and read-only validation workflow without expanding
+  financial coverage.
 - **Documentation ownership:** Current QA counts diverged across the README,
   current context, and Milestone 0 baseline. Issue #27 synchronizes them to
   the observed 45-test result and records configured-tool ownership.

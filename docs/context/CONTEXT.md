@@ -26,7 +26,7 @@
 - **Architecture:** Product direction is approved. Reference-case governance,
   simulation provenance, financial conventions, backend authority, and
   verifiable financing-replay admission are documented in ADRs. A synthetic
-  regression reference and a selected, unconfigured QA baseline complete
+  regression reference and a selected, partially configured QA baseline complete
   Milestone 0 documentation.
 - **Current priority:** Fixed monthly financing-fee admission remains blocked
   pending its own approved Track C admission record. The retained v1 replay
@@ -74,7 +74,7 @@ The canonical scope and acceptance criteria are in the
 | `scripts/` | Optional workflow enforcement scripts; not application code. |
 
 The repository contains no FastAPI API, Next.js frontend, database,
-persistence, CI configuration, or dependency manifest. Comparison contracts
+persistence, or dependency manifest. Comparison contracts
 beyond the neutral common ledger and the version envelope, consortium, and
 eligibility rules remain unimplemented. Real financial and identifying data
 remain prohibited from source control.
@@ -107,7 +107,7 @@ tests, dependency manifests, and package pinning remain unconfigured.
 Milestone 0 selected and recorded the broader future baseline in the
 [synthetic regression reference and QA baseline](../specifications/milestone-0-synthetic-reference-and-qa.md).
 
-Until then, documentation changes are validated by checking:
+Documentation changes are validated by checking:
 
 - Markdown structure and links;
 - absence of unresolved template placeholders;

@@ -42,6 +42,13 @@ An explicit request to edit the named documentation is sufficient approval
 for that scope. Escalate to Track B or C if the documentation change creates
 or changes a product or architecture decision.
 
+Maintain `CONTEXT.md` only when current material repository state changes:
+the active priority, an implemented capability, a configured validation
+baseline, an architecture or contract boundary, or another fact needed to
+understand the repository's present state. Do not use it as a per-task or
+per-pull-request changelog; routine editorial corrections and ordinary test
+reruns do not require an update.
+
 ### Track B — Ordinary behavioral work
 
 Use for bounded frontend, API, application-service, or tooling behavior that
