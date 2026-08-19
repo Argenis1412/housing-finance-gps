@@ -13,7 +13,7 @@
   Price are the implemented financing behaviors, delivered through PR #12 /
   Issue #11 and PR #16 / Issue #15 respectively. PR #18 / Issue #17 harden
   their unsupported-clause boundary and synthetic invariants without adding a
-  new financial behavior. Issue #19 implements the deterministic
+  new financial behavior. PR #20 / Issue #19 merge the deterministic
   rent-plus-investment foundation and neutral common-ledger ownership. No API,
   frontend, persistence, CI, or dependency toolchain is configured.
 - **Repository state:** Git is available. Work follows the issue-first,
@@ -23,9 +23,10 @@
   simulation provenance, financial conventions, and backend authority are
   documented in ADRs. A synthetic regression reference and a selected,
   unconfigured QA baseline complete Milestone 0 documentation.
-- **Current priority:** Issue #19 is implemented on its issue branch and
-  awaits validation and review. Any new financial or architecture-critical
-  work remains Track C approval-gated.
+- **Current priority:** A separately approved, fees-only Track C admission
+  proposal is the recommended next work item. Insurance and nonzero indexation
+  remain deferred; any financial or architecture-critical work remains Track C
+  approval-gated.
 
 ## Approved direction
 

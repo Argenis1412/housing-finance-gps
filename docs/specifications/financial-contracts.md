@@ -204,11 +204,10 @@ indexation is an `unsupported_contract_clause`; explicit zero declarations
 remain accepted exclusions. Nonzero FGTS, subsidy, and tax requests remain
 `unsupported_rule`.
 
-Future support for correction or indexation, fees, or insurance requires an
-approved ADR before implementation. That ADR must define the contractual
-semantics, ledger treatment, posting order and rounding, compatibility effect,
-unsupported variants, and independent synthetic references. A deterministic
-input representation alone does not admit a financial clause.
+Future support for correction or indexation, fees, or insurance requires the
+admission evidence in [ADR-0005](../adr/0005-financing-extension-admission-boundary.md)
+before implementation. A deterministic input representation alone does not
+admit a financial clause.
 
 Complete observed, contractual, rule, and projected-assumption classification
 for the real reference case belongs only to the schema-versioned private
