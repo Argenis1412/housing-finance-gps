@@ -9,10 +9,10 @@
 - **Product:** A private Brazilian housing decision-support tool comparing
   SAC or Price financing, consortium scenarios, and renting while
   accumulating capital.
-- **Delivery state:** Milestone 0 documentation readiness is complete. PR #12
-  merged the first Milestone 1 slice and Issue #11 is closed: SAC is the sole
-  implemented financial behavior. No API, frontend, persistence, CI, or
-  dependency toolchain is configured.
+- **Delivery state:** Milestone 0 documentation readiness is complete. SAC and
+  Price are the implemented financing behaviors, delivered through PR #12 /
+  Issue #11 and PR #16 / Issue #15 respectively. No API, frontend,
+  persistence, CI, or dependency toolchain is configured.
 - **Repository state:** Git is available. Work follows the issue-first,
   issue-numbered-branch, draft-pull-request workflow in the development
   process.
@@ -20,11 +20,8 @@
   simulation provenance, financial conventions, and backend authority are
   documented in ADRs. A synthetic regression reference and a selected,
   unconfigured QA baseline complete Milestone 0 documentation.
-- **Current priority:** After this documentation synchronization pull request
-  is merged and explicit authorization is received, prepare the Track C
-  proposal for “Milestone 1.1 — deterministic Price and comparison-contract
-  foundation.” Do not create its branch or implementation files before that
-  gate.
+- **Current priority:** No next implementation proposal is active. Any new
+  financial or architecture-critical work remains Track C approval-gated.
 
 ## Approved direction
 
@@ -52,18 +49,20 @@ The canonical scope and acceptance criteria are in the
 | `docs/process/` | Development, review, approval, and QA workflow. |
 | `docs/context/` | Current state, history, open questions, and discoveries. |
 | `docs/adr/` | ADR guidance and future accepted architecture decisions. |
-| `domain/values.py` | Immutable BRL money and rate values plus canonical runtime failures for the implemented domain boundary. |
-| `domain/financing/sac.py` | Pure SAC request normalization, contractual schedule, and fixed 60-month comparison ledger. |
-| `tests/test_sac_domain.py` | Synthetic-only regression and boundary tests for the SAC implementation. |
+| `domain/values.py` | Immutable BRL money and rate values plus canonical runtime failures for the financing domain. |
+| `domain/financing/contracts.py` | Shared financing request, normalization, canonical failures, and immutable schedule and ledger rows. |
+| `domain/financing/sac.py` | Pure SAC schedule calculation using the shared financing boundary. |
+| `domain/financing/price.py` | Pure Price schedule calculation using exact rational installment arithmetic. |
+| `tests/` | Synthetic-only regression and boundary tests for SAC and Price. |
 | `.claude/` | Claude-specific adapters that defer to repository-owned rules. |
 | `.project/` | Optional mechanical review-plan gate artifacts. |
 | `scripts/` | Optional workflow enforcement scripts; not application code. |
 
 The repository contains no FastAPI API, Next.js frontend, database,
-persistence, CI configuration, or dependency manifest. Price, shared
-comparison contracts and version envelope, consortium, rent-plus-investment,
-and eligibility rules remain unimplemented. Real financial and identifying
-data remain prohibited from source control.
+persistence, CI configuration, or dependency manifest. Comparison contracts
+beyond the shared financing boundary and the version envelope, consortium,
+rent-plus-investment, and eligibility rules remain unimplemented. Real
+financial and identifying data remain prohibited from source control.
 
 ## Active architecture invariants
 
@@ -73,12 +72,13 @@ those rules.
 
 ## QA status
 
-The SAC domain has a standard-library unit-test suite: `uv run --offline
---no-project python -m unittest discover -s tests -t . -v` passes 13
+The financing domain has a standard-library unit-test suite: `uv run --offline
+--no-project python -m unittest discover -s tests -t . -v` passes 21
 synthetic-only tests. The suite protects monetary and rate validation,
 unsupported-case classification, posted-centavo SAC rounding and settlement,
-separate schedule and ledger time domains, synthetic fixture checkpoints,
-determinism, and immutability.
+Price exact-rational installments, posted-centavo rounding and settlement,
+caller-context independence, separate schedule and ledger time domains,
+synthetic fixture checkpoints, determinism, and immutability.
 
 Linting, formatting, static type checking, contract tests, frontend tests,
 browser tests, package pinning, and CI remain unconfigured. Milestone 0

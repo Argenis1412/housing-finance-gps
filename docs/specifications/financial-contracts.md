@@ -56,6 +56,16 @@ Down payments, credit-letter application, principal payments, credit-component p
 
 ## Financing contracts
 
+### Shared financing boundary
+
+SAC and Price use one strategy-neutral request and normalized input boundary.
+The boundary owns the common monetary fields, the property-price relationship,
+term validation, rate normalization, explicit-zero declarations, and canonical
+failure classification. It also owns the immutable contractual-schedule row
+and comparison-ledger row shared by both financing systems. A strategy may
+expose compatibility aliases or wrappers, but neither financing system owns the
+common input contract or imports the other strategy to normalize a request.
+
 ### Supported inputs
 
 Both SAC and Price require:
@@ -80,12 +90,20 @@ For each financing month, the opening balance is the prior posted closing financ
 
 Interest is the opening posted balance multiplied by the effective monthly rate,
 then rounded. For SAC, regular amortization is the rounded principal divided by
-term. For Price with a non-zero rate, the unrounded regular installment is
-principal * rate / (1 - (1 + rate)^(-term_months)); its posted value is
-rounded. When the rate is zero, the regular payment is the rounded principal
-divided by term. In the final month for either system, amortization equals the
-opening posted balance and payment equals final interest plus that balance. The
-final posted principal balance is exactly 0.00 BRL.
+term. For Price, principal and the effective monthly rate are converted from
+their accepted decimal representations to exact rational operands. With a
+non-zero rate, the regular installment is exactly
+`principal * rate / (1 - (1 + rate)^(-term_months))`; with a zero rate, it is
+exactly `principal / term_months`. In either Price case, the regular
+installment is rounded once to centavos with `ROUND_HALF_UP`. There is no
+intermediate Decimal-precision policy for the Price installment.
+
+For Price, each non-final month's posted amortization is the posted regular
+installment minus posted interest, and the posted closing principal is the
+opening posted principal minus that amortization. In the final month for either
+system, amortization equals the opening posted balance and payment equals final
+interest plus that balance. The final posted principal balance is exactly 0.00
+BRL.
 
 ## Simplified consortium contract
 
@@ -165,11 +183,12 @@ The backend financial domain is authoritative. The frontend may collect inputs, 
 ## Deferred work
 
 - API wire schemas and OpenAPI generation.
-- Price financing and the shared comparison-contract and version envelope.
+- Comparison contracts beyond the shared financing boundary and the version
+  envelope.
 - The consortium and rent-plus-investment implementations.
 - Property appreciation, inflation, monetary correction, fees, insurance, taxes, and extraordinary amortization.
 - FGTS, MCMV, and all other eligibility rules.
-- SAC implementation is limited to its accepted contract and the existing
-  `sac_basic` synthetic regression checkpoints. Additional synthetic fixtures,
-  independent reference schedules, and all other financial implementations
-  remain deferred.
+- SAC and Price implementations are limited to their accepted contracts and
+  the existing `sac_basic` and `price_basic` synthetic regression checkpoints.
+  Additional synthetic fixtures, independent reference schedules, and all
+  other financial implementations remain deferred.
