@@ -18,8 +18,8 @@
   PR #26 / Issue #25 delivered the retained v1 financing replay evaluator,
   which emits and reexecutes sealed,
   versioned SAC and Price envelopes without live financing or ledger
-  dependencies. No API, frontend, persistence, CI, or dependency toolchain is
-  configured.
+  dependencies. No API, frontend, persistence, or dependency manifest is
+  configured. Minimal Ruff and GitHub Actions validation are configured.
 - **Repository state:** Git is available. Work follows the issue-first,
   issue-numbered-branch, draft-pull-request workflow in the development
   process.
@@ -88,7 +88,7 @@ those rules.
 ## QA status
 
 The financing domain has a standard-library unit-test suite: `uv run --offline
---no-project python -m unittest discover -s tests -t . -v` passes 44
+--no-project python -m unittest discover -s tests -t . -v` passes 45
 synthetic-only tests. The suite protects monetary and rate validation,
 unsupported-case classification, posted-centavo SAC rounding and settlement,
 Price exact-rational installments, posted-centavo rounding and settlement,
@@ -99,11 +99,13 @@ determinism, immutability, canonical versioned financing replay, full-trace
 equivalence, historical positive-fee failure preservation, and the v1
 600-month schedule boundary.
 
-Linting, formatting, static type checking, contract tests, frontend tests,
-browser tests, package pinning, and CI remain unconfigured. Milestone 0
-selected and recorded their future baseline in
-[synthetic regression reference and QA baseline](../specifications/milestone-0-synthetic-reference-and-qa.md);
-configuration remains a future implementation work item.
+Ruff 0.16.0 is configured for Python 3.13 with the conservative `E4`, `E7`,
+`E9`, and `F` rule selection. GitHub Actions runs that lint command and the
+synthetic-only standard-library suite with read-only repository permissions.
+Formatting, static type checking, contract tests, frontend tests, browser
+tests, dependency manifests, and package pinning remain unconfigured.
+Milestone 0 selected and recorded the broader future baseline in the
+[synthetic regression reference and QA baseline](../specifications/milestone-0-synthetic-reference-and-qa.md).
 
 Until then, documentation changes are validated by checking:
 

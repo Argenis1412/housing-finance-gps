@@ -63,4 +63,23 @@ After every five merged behavioral pull requests, review:
 
 Record dated audit results below.
 
-_No audits recorded._
+### August 19, 2026 — Five behavioral pull requests
+
+- **Review-track fit:** PRs #12, #16, #18, #20, and #26 changed deterministic
+  financial behavior, financial boundaries, or historical replay. Their Track C
+  classification matched the documented risk.
+- **Reviewer signal:** The retained merge history records review-driven fixes
+  for SAC decimal-context isolation, Price rational half-cent coverage,
+  rent input and discovery boundaries, and replay fail-closed behavior. The
+  repository does not retain complete reviewer-thread data, so it cannot
+  quantify reviewer noise or compare findings against all non-findings.
+- **Deferred discoveries:** `docs/context/discoveries.md` has no entries.
+  Deferred financial clauses remain explicitly owned by ADR-0005 and ADR-0006
+  rather than being accumulated as unowned discoveries.
+- **QA determinism and usefulness:** The synthetic-only standard-library suite
+  passes 45 tests with the documented offline command. The audit found no
+  configured lint or CI; Issue #27 adds a minimal pinned Ruff check and
+  read-only validation workflow without expanding financial coverage.
+- **Documentation ownership:** Current QA counts diverged across the README,
+  current context, and Milestone 0 baseline. Issue #27 synchronizes them to
+  the observed 45-test result and records configured-tool ownership.

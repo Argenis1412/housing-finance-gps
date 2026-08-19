@@ -15,14 +15,14 @@ only after the calculation engine has been validated.
 ## Current status
 
 Milestone 0 documentation is ready: governance, provenance, financial
-contracts, a synthetic regression reference, and a selected (but unconfigured)
-QA baseline are recorded. The implemented deterministic domain includes SAC,
-Price, a neutral 60-month comparison ledger, and rent-plus-investment. Its 36
+contracts, a synthetic regression reference, and a selected QA baseline are
+recorded. The implemented deterministic domain includes SAC,
+Price, a neutral 60-month comparison ledger, and rent-plus-investment. Its 45
 synthetic-only standard-library tests pass.
 
 Comparison contracts beyond the neutral ledger and version envelope, API,
-frontend, persistence, CI, dependencies, consortium, eligibility rules, and
-real financial data remain unimplemented or out of scope.
+frontend, persistence, dependency toolchains, consortium, eligibility rules,
+and real financial data remain unimplemented or out of scope.
 
 See [current context](docs/context/CONTEXT.md) for the exact active priority.
 
@@ -53,10 +53,21 @@ The complete documentation map and ownership rules are in
 
 ## Development
 
-Read [AGENTS.md](AGENTS.md) before modifying the repository. The concrete
-Python and TypeScript setup commands will be documented here after the
-foundation milestone selects and configures the toolchains. Do not infer
-commands from the product vision.
+Read [AGENTS.md](AGENTS.md) before modifying the repository.
+
+### Validation
+
+Run Ruff with the repository's pinned tool version:
+
+```text
+uvx --from ruff==0.16.0 ruff check .
+```
+
+Run the synthetic-only standard-library test suite:
+
+```text
+uv run --offline --no-project python -m unittest discover -s tests -t . -v
+```
 
 ## Privacy and limitations
 

@@ -73,10 +73,10 @@ logs, fixtures, or shared exports. Git-visible evidence is limited to the
 redacted artifact class defined by the governance contract; this PR does not
 add one.
 
-## Selected but unconfigured QA baseline
+## Selected QA baseline
 
-The following tools are selected for a future implementation work item. They
-are not installed, pinned, configured, or run by this milestone.
+The following tools are selected for future implementation work items unless
+this document records them as configured.
 
 | Area | Selected baseline | Intended guarantee |
 | --- | --- | --- |
@@ -85,15 +85,15 @@ are not installed, pinned, configured, or run by this milestone.
 | Next.js and TypeScript | Node.js 22 LTS, pnpm, TypeScript, Biome, Vitest | Presentation correctness, type safety, and absence of client-owned financial formulas. |
 | Browser | Playwright | Accessible input and result rendering against backend-owned results. |
 | Formula-boundary review | Static source review plus API-contract tests | Reject authoritative interest, amortization, balance, ranking, sensitivity, and break-even calculations outside Python. |
-| CI | GitHub Actions, dependency review, secret scanning | Repeatable checks using synthetic fixtures only. |
+| CI | GitHub Actions; dependency review and secret scanning remain deferred | Repeatable checks using synthetic fixtures only. |
 
-Exact commands, package versions, workflow configuration, API endpoints, and
-OpenAPI-to-TypeScript generation tooling remain deferred until their own
-approved implementation work item. This historical baseline did not configure
-those tools. Separately, the merged financial-domain implementation now has a
-standard-library test suite with 36 synthetic-only passing tests; it does not
-constitute configured linting, type checking, API, frontend, browser, or CI
-tooling.
+Ruff 0.16.0 is configured with Python 3.13 and the conservative `E4`, `E7`,
+`E9`, and `F` selection. GitHub Actions runs the pinned Ruff command and the
+offline standard-library suite with read-only repository permissions. The
+merged financial-domain implementation has 45 synthetic-only passing tests.
+Type checking, formatting, API endpoints, OpenAPI-to-TypeScript generation,
+frontend, browser, dependency review, and secret scanning remain deferred
+until their own approved implementation work items.
 
 ## Validation requirements for this artifact
 
@@ -117,7 +117,8 @@ tooling.
 
 - Executable fixture schema validation and financial regression tests for
   consortium.
-- Tool installation, version pinning, scripts, and CI configuration.
+- Type checking, formatting, dependency review, secret scanning, and further
+  CI configuration.
 - FastAPI, Next.js, TypeScript, persistence, browser code, and Python-domain
   work beyond the implemented SAC slice.
 - Any real-case export, signing, encryption, or automated local-validation
