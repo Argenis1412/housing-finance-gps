@@ -111,6 +111,22 @@ def test_zero_rate_regular_payment_uses_exact_half_up_posting() -> None:
     assert result.contractual_schedule[-1].closing_principal_balance.as_string == "0.00"
 
 
+def test_nonzero_rate_regular_payment_uses_exact_half_up_posting() -> None:
+    result = calculate_price(
+        _normalized(
+            comparison_opening_cash="0.05",
+            property_price="0.05",
+            cash_down_payment="0.00",
+            principal="0.05",
+            term_months=2,
+            rate_value="0.5",
+        )
+    )
+    assert result.contractual_schedule[0].payment.as_string == "0.05"
+    assert result.contractual_schedule[0].interest.as_string == "0.03"
+    assert result.contractual_schedule[-1].closing_principal_balance.as_string == "0.00"
+
+
 def test_price_is_independent_of_the_callers_decimal_context() -> None:
     normalized = _normalized()
     baseline = calculate_price(normalized)
@@ -180,6 +196,7 @@ def load_tests(
         test_strategies_share_the_neutral_request_and_normalization_boundary,
         test_price_fixture_checkpoints_are_exact,
         test_zero_rate_regular_payment_uses_exact_half_up_posting,
+        test_nonzero_rate_regular_payment_uses_exact_half_up_posting,
         test_price_is_independent_of_the_callers_decimal_context,
         test_price_uses_shared_rows_and_separate_time_domains,
         test_price_outputs_are_deterministic_and_immutable,
