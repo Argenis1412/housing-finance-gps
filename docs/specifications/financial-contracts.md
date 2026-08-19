@@ -65,9 +65,10 @@ Down payments, credit-letter application, principal payments, credit-component p
 
 SAC and Price use one strategy-neutral request and normalized input boundary.
 The boundary owns the common monetary fields, the property-price relationship,
-term validation, rate normalization, explicit-zero declarations, and canonical
-failure classification. It also owns the immutable contractual-schedule row
-and comparison-ledger row shared by both financing systems. A strategy may
+term validation, rate normalization, explicit-zero declarations, canonical
+failure classification, and immutable contractual-schedule row shared by both
+financing systems. `domain/ledger.py` owns the shared comparison-ledger row;
+the financing boundary reexports it only for compatibility. A strategy may
 expose compatibility aliases or wrappers, but neither financing system owns the
 common input contract or imports the other strategy to normalize a request.
 
