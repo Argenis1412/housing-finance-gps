@@ -33,7 +33,7 @@ simulation would use, but none of its values were observed from a household.
 | `price_basic` | Month-0 purchase, the rounded regular installment, a final settlement that differs from it, month-12 zero principal, and month-60 comparison balances. |
 | `financing_unsupported_clauses` | Synthetic request mutations and their canonical failure categories; SAC and Price must reject each case identically before calculation. |
 | `consortium_credit_right` | Pre-contemplation credit right, month-4 transfer to property and a R$600.00 residual obligation, a later credit-component reduction, and cleared obligation at month 60. |
-| `rent_plus_investment` | Opening-balance investment return, end-of-month contribution, first rent adjustment in month 13, subsequent annual adjustments, and month-60 liquidity and cost. |
+| `rent_plus_investment` | Month-0 capital allocation, opening-balance investment return, end-of-month contribution, first rent adjustment in month 13, subsequent annual adjustments, and month-60 liquidity and cost. |
 
 `positive_classified_flow_amount` means a positive `recoverable_transfer` or
 `nonrecoverable_housing_cost` is a cash outflow in this fixture. Ledger
@@ -90,8 +90,8 @@ are not installed, pinned, configured, or run by this milestone.
 Exact commands, package versions, workflow configuration, API endpoints, and
 OpenAPI-to-TypeScript generation tooling remain deferred until their own
 approved implementation work item. This historical baseline did not configure
-those tools. Separately, the merged SAC implementation now has a
-standard-library test suite with 13 synthetic-only passing tests; it does not
+those tools. Separately, the merged financial-domain implementation now has a
+standard-library test suite with 36 synthetic-only passing tests; it does not
 constitute configured linting, type checking, API, frontend, browser, or CI
 tooling.
 
@@ -109,11 +109,14 @@ tooling.
 - SAC and Price assert the synthetic unsupported-clause matrix with identical
   canonical failure codes, and assert schedule and ledger conservation for
   every supported posted period.
+- Rent-plus-investment asserts its month-0 allocation and all named synthetic
+  checkpoints with zero tolerance, then verifies posting and ledger
+  conservation for every comparison period.
 
 ## Deferred work
 
 - Executable fixture schema validation and financial regression tests for
-  consortium and rent-plus-investment.
+  consortium.
 - Tool installation, version pinning, scripts, and CI configuration.
 - FastAPI, Next.js, TypeScript, persistence, browser code, and Python-domain
   work beyond the implemented SAC slice.

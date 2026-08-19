@@ -17,7 +17,7 @@ All values that do not meet this contract fail explicitly. No financial rule, pr
 | --- | --- |
 | Currency | Brazilian real (BRL). Monetary inputs and outputs are decimal strings with two fractional digits. |
 | Rates | Decimal strings. The only supported financing and capital-return convention is an effective monthly rate. Rent adjustment is an effective annual rate. |
-| Period | A positive, one-based integer month. Month 0 is a financing purchase event only; it is not a schedule row. |
+| Period | A positive, one-based integer month. Month 0 is an opening allocation or financing-purchase event; it is not a contractual schedule row. |
 | Rounding | ROUND_HALF_UP to centavos for each posted monetary ledger value. Posted centavo balances are authoritative for the next period. |
 | Comparison horizon | 60 monthly periods. This is distinct from a contractual financing term. |
 | Value basis | Nominal BRL. Inflation, property appreciation, and correction require an explicit later contract; the initial supported value is zero where an applicable field exists. |
@@ -26,7 +26,12 @@ The engine uses deterministic decimal arithmetic. It does not obtain time, local
 
 ## Common monthly ledger
 
-Each strategy emits one row per comparison month with the following closing balances and classified flows:
+Each strategy emits one closing ledger row for month 0 and each comparison month
+through month 60 with the following balances and classified flows. The neutral
+ledger contract is owned by `domain/ledger.py`; strategy modules own their
+balance transitions and supply reconciled closing balances to it. The ledger
+derives only the common identity metrics and never accepts caller-supplied
+totals, liquidity, home equity, or net worth.
 
 | Element | Meaning |
 | --- | --- |
@@ -154,8 +159,21 @@ Rent is a non-recoverable housing cost. Starting_monthly_rent applies before
 first_rent_adjustment_month; the effective annual adjustment applies to the
 posted rent in that month and every twelve months after it. Monthly return
 accrues on opening liquid financial assets before the end-of-month contribution
-is added. Taxes, investment-product rules, withdrawal restrictions, and a
-future purchase are unsupported until separately contracted.
+is added. Initial invested capital is a month-0 transfer from cash to liquid
+financial assets and is a recoverable transfer, not a housing cost. Each
+monthly return and rent adjustment is calculated as an exact rational product
+and posted once to centavos with `ROUND_HALF_UP`. Rent and contribution then
+decrease cash; contribution increases liquid financial assets as a recoverable
+transfer. The strategy returns `infeasible_scenario` without a partial result
+when its month-0 allocation or any monthly posting would leave cash negative.
+
+The request separately declares an annual rent-adjustment rate and a monthly
+net-return rate. `effective_annual` and `effective_monthly` are the only
+accepted conventions, including zero-rate declarations. Any other finite
+convention returns `unsupported_rate_convention`. A nonzero tax request
+returns `unsupported_rule`; requested investment-product, withdrawal-
+restriction, and future-purchase declarations return
+`unsupported_contract_clause`.
 
 ## Time domains and versions
 
@@ -204,9 +222,9 @@ The backend financial domain is authoritative. The frontend may collect inputs, 
 ## Deferred work
 
 - API wire schemas and OpenAPI generation.
-- Comparison contracts beyond the shared financing boundary and the version
+- Comparison contracts beyond the neutral common ledger and the version
   envelope.
-- The consortium and rent-plus-investment implementations.
+- The consortium implementation.
 - Property appreciation, inflation, monetary correction, fees, insurance, taxes, and extraordinary amortization.
 - FGTS, MCMV, and all other eligibility rules.
 - SAC and Price implementations are limited to their accepted contracts and

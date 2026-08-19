@@ -311,6 +311,16 @@
       },
       "checkpoints": [
         {
+          "event": "month_0_initial_capital_allocation",
+          "expected": {
+            "cash": "19700.00",
+            "liquid_financial_assets": "300.00",
+            "recoverable_transfer": "300.00",
+            "nonrecoverable_housing_cost": "0.00",
+            "cumulative_housing_cost": "0.00"
+          }
+        },
+        {
           "month": 1,
           "expected": {
             "rent": "100.00",
