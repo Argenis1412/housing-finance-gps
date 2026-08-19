@@ -72,12 +72,13 @@ those rules.
 
 ## QA status
 
-The SAC domain has a standard-library unit-test suite: `uv run --offline
+The financing domain has a standard-library unit-test suite: `uv run --offline
 --no-project python -m unittest discover -s tests -t . -v` passes 21
 synthetic-only tests. The suite protects monetary and rate validation,
 unsupported-case classification, posted-centavo SAC rounding and settlement,
-separate schedule and ledger time domains, synthetic fixture checkpoints,
-determinism, and immutability.
+Price exact-rational installments, posted-centavo rounding and settlement,
+caller-context independence, separate schedule and ledger time domains,
+synthetic fixture checkpoints, determinism, and immutability.
 
 Linting, formatting, static type checking, contract tests, frontend tests,
 browser tests, package pinning, and CI remain unconfigured. Milestone 0
