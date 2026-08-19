@@ -47,7 +47,8 @@ admitted variant:
 
 - input and output units, the monetary or rate basis, and every applicable
   rate, index, or correction convention; an observed external index must also
-  identify its independent source, period, effective date, and snapshot;
+  identify its independent source, period, retrieval date, effective date, and
+  snapshot;
 - contractual periods, effective and anniversary dates, posting order,
   calculation basis, and `ROUND_HALF_UP` centavo posting points;
 - whether and how the clause changes cash, a financing balance, property
