@@ -182,7 +182,7 @@ The implemented SAC and Price boundary supports only the fixed-principal,
 effective-monthly-rate case defined above. A positive financing fee, insurance
 amount, transaction cost, extraordinary amortization, or requested nonzero
 indexation is an `unsupported_contract_clause`; explicit zero declarations
-remain accepted exclusions. FGTS, subsidy, and tax requests remain
+remain accepted exclusions. Nonzero FGTS, subsidy, and tax requests remain
 `unsupported_rule`.
 
 Future support for correction or indexation, fees, or insurance requires an

@@ -184,6 +184,16 @@ def test_price_schedule_and_ledger_invariants_hold_for_every_posted_period() -> 
 
     previous_row = None
     for row in result.comparison_ledger:
+        if row.month > 0 and row.month <= len(result.contractual_schedule):
+            posting = result.contractual_schedule[row.month - 1]
+            assert row.financing_principal_balance.amount == posting.closing_principal_balance.amount
+            assert row.nonrecoverable_housing_cost.amount == posting.interest.amount
+            assert previous_row is not None
+            assert row.cash.amount == previous_row.cash.amount - posting.payment.amount
+        elif previous_row is not None:
+            assert row.financing_principal_balance.amount == Decimal("0.00")
+            assert row.nonrecoverable_housing_cost.amount == Decimal("0.00")
+            assert row.cash.amount == previous_row.cash.amount
         assert row.total_liabilities.amount == (
             row.financing_principal_balance.amount + row.consortium_credit_obligation_balance.amount
         )
