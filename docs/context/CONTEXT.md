@@ -11,8 +11,10 @@
   accumulating capital.
 - **Delivery state:** Milestone 0 documentation readiness is complete. SAC and
   Price are the implemented financing behaviors, delivered through PR #12 /
-  Issue #11 and PR #16 / Issue #15 respectively. No API, frontend,
-  persistence, CI, or dependency toolchain is configured.
+  Issue #11 and PR #16 / Issue #15 respectively. Issue #17 hardens their
+  unsupported-clause boundary and synthetic invariants without adding a new
+  financial behavior. No API, frontend, persistence, CI, or dependency
+  toolchain is configured.
 - **Repository state:** Git is available. Work follows the issue-first,
   issue-numbered-branch, draft-pull-request workflow in the development
   process.
@@ -20,8 +22,9 @@
   simulation provenance, financial conventions, and backend authority are
   documented in ADRs. A synthetic regression reference and a selected,
   unconfigured QA baseline complete Milestone 0 documentation.
-- **Current priority:** No next implementation proposal is active. Any new
-  financial or architecture-critical work remains Track C approval-gated.
+- **Current priority:** Issue #17 is implemented on its issue branch and
+  awaits review. Any new financial or architecture-critical work remains
+  Track C approval-gated.
 
 ## Approved direction
 
@@ -73,12 +76,13 @@ those rules.
 ## QA status
 
 The financing domain has a standard-library unit-test suite: `uv run --offline
---no-project python -m unittest discover -s tests -t . -v` passes 21
+--no-project python -m unittest discover -s tests -t . -v` passes 25
 synthetic-only tests. The suite protects monetary and rate validation,
 unsupported-case classification, posted-centavo SAC rounding and settlement,
 Price exact-rational installments, posted-centavo rounding and settlement,
 caller-context independence, separate schedule and ledger time domains,
-synthetic fixture checkpoints, determinism, and immutability.
+synthetic fixture checkpoints, synthetic unsupported-clause parity, schedule
+and ledger invariants, determinism, and immutability.
 
 Linting, formatting, static type checking, contract tests, frontend tests,
 browser tests, package pinning, and CI remain unconfigured. Milestone 0

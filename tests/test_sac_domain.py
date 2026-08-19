@@ -102,6 +102,14 @@ def test_closed_exclusions_use_canonical_failure_categories() -> None:
     assert _failure(indexation="requested_nonzero").code == "unsupported_contract_clause"
 
 
+def test_synthetic_unsupported_clause_matrix_matches_the_financing_boundary() -> None:
+    fixture = json.loads(FIXTURE_PATH.read_text(encoding="utf-8"))
+    matrix = fixture["fixtures"]["financing_unsupported_clauses"]
+    for case in matrix["cases"]:
+        failure = _failure(**case["changes"])
+        assert failure.code == case["expected_failure_code"], case["name"]
+
+
 def test_explicit_zero_exclusions_have_no_calculation_effect() -> None:
     normalized = _normalized(
         fgts_amount="0.00",
@@ -176,6 +184,53 @@ def test_schedule_and_ledger_have_separate_time_domains() -> None:
     assert result.comparison_ledger[-1].financing_principal_balance.as_string == "1200.00"
 
 
+def test_sac_schedule_and_ledger_invariants_hold_for_every_posted_period() -> None:
+    result = calculate_sac(_normalized())
+    previous_closing = None
+    for row in result.contractual_schedule:
+        if previous_closing is not None:
+            assert row.opening_principal_balance.amount == previous_closing
+        assert row.opening_principal_balance.amount >= Decimal("0.00")
+        assert row.amortization.amount >= Decimal("0.00")
+        assert row.closing_principal_balance.amount >= Decimal("0.00")
+        assert row.payment.amount == row.interest.amount + row.amortization.amount
+        assert row.closing_principal_balance.amount == (
+            row.opening_principal_balance.amount - row.amortization.amount
+        )
+        previous_closing = row.closing_principal_balance.amount
+    assert result.contractual_schedule[-1].closing_principal_balance.amount == Decimal("0.00")
+
+    previous_row = None
+    for row in result.comparison_ledger:
+        if row.month > 0 and row.month <= len(result.contractual_schedule):
+            posting = result.contractual_schedule[row.month - 1]
+            assert row.financing_principal_balance.amount == posting.closing_principal_balance.amount
+            assert row.nonrecoverable_housing_cost.amount == posting.interest.amount
+            assert previous_row is not None
+            assert row.cash.amount == previous_row.cash.amount - posting.payment.amount
+        elif previous_row is not None:
+            assert row.financing_principal_balance.amount == Decimal("0.00")
+            assert row.nonrecoverable_housing_cost.amount == Decimal("0.00")
+            assert row.cash.amount == previous_row.cash.amount
+        assert row.total_liabilities.amount == (
+            row.financing_principal_balance.amount + row.consortium_credit_obligation_balance.amount
+        )
+        assert row.home_equity.amount == row.property_value.amount - row.total_liabilities.amount
+        assert row.liquidity.amount == row.cash.amount + row.liquid_financial_assets.amount
+        assert row.net_worth.amount == (
+            row.cash.amount
+            + row.liquid_financial_assets.amount
+            + row.consortium_credit_right_balance.amount
+            + row.property_value.amount
+            - row.total_liabilities.amount
+        )
+        expected_cumulative_cost = row.nonrecoverable_housing_cost.amount
+        if previous_row is not None:
+            expected_cumulative_cost += previous_row.cumulative_housing_cost.amount
+        assert row.cumulative_housing_cost.amount == expected_cumulative_cost
+        previous_row = row
+
+
 def test_synthetic_sac_fixture_checkpoints() -> None:
     fixture = json.loads(FIXTURE_PATH.read_text(encoding="utf-8"))
     sac = fixture["fixtures"]["sac_basic"]
@@ -245,11 +300,13 @@ def load_tests(
         test_normalization_balance_check_ignores_callers_decimal_context,
         test_non_monthly_zero_is_classified_before_effective_rate_construction,
         test_closed_exclusions_use_canonical_failure_categories,
+        test_synthetic_unsupported_clause_matrix_matches_the_financing_boundary,
         test_explicit_zero_exclusions_have_no_calculation_effect,
         test_sac_rounding_and_final_settlement,
         test_sac_is_independent_of_callers_decimal_context,
         test_sac_accepts_large_two_fraction_amounts,
         test_schedule_and_ledger_have_separate_time_domains,
+        test_sac_schedule_and_ledger_invariants_hold_for_every_posted_period,
         test_synthetic_sac_fixture_checkpoints,
         test_outputs_are_deterministic_and_immutable,
     )

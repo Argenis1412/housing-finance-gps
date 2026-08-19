@@ -31,6 +31,7 @@ simulation would use, but none of its values were observed from a household.
 | --- | --- |
 | `sac_basic` | Month-0 purchase, fixed R$100.00 SAC amortization, month-12 zero principal, and month-60 comparison balances. |
 | `price_basic` | Month-0 purchase, the rounded regular installment, a final settlement that differs from it, month-12 zero principal, and month-60 comparison balances. |
+| `financing_unsupported_clauses` | Synthetic request mutations and their canonical failure categories; SAC and Price must reject each case identically before calculation. |
 | `consortium_credit_right` | Pre-contemplation credit right, month-4 transfer to property and a R$600.00 residual obligation, a later credit-component reduction, and cleared obligation at month 60. |
 | `rent_plus_investment` | Opening-balance investment return, end-of-month contribution, first rent adjustment in month 13, subsequent annual adjustments, and month-60 liquidity and cost. |
 
@@ -45,6 +46,11 @@ The consortium schedule ends in month 10; its balances likewise remain
 unchanged through month 60. The fixture deliberately uses no inflation,
 property appreciation, correction, fee beyond the explicit consortium
 administration fee, tax, insurance, FGTS, MCMV, bid, or probability.
+
+The rejection matrix is not a real proposal and does not grant support to any
+of its named clauses. Its classifications describe invented fixture inputs
+only. Complete classification and provenance for a real reference case remain
+owned by the private reproducible envelope under the governance contract.
 
 ## Private-reference local validation
 
@@ -100,11 +106,14 @@ tooling.
 - The merged SAC implementation asserts every `sac_basic` checkpoint with zero
   tolerance and covers its supported typed unsupported-case failures. Apply the
   same requirement to each later supported strategy.
+- SAC and Price assert the synthetic unsupported-clause matrix with identical
+  canonical failure codes, and assert schedule and ledger conservation for
+  every supported posted period.
 
 ## Deferred work
 
-- Executable fixture schema validation and financial regression tests for Price,
-  consortium, and rent-plus-investment.
+- Executable fixture schema validation and financial regression tests for
+  consortium and rent-plus-investment.
 - Tool installation, version pinning, scripts, and CI configuration.
 - FastAPI, Next.js, TypeScript, persistence, browser code, and Python-domain
   work beyond the implemented SAC slice.

@@ -176,6 +176,27 @@ The future versioned API maps these stable machine-readable categories to safe P
 | infeasible_scenario | Valid inputs violate an explicit feasibility or balance condition. |
 | incompatible_contract_version | The supplied contract or simulation version cannot be interpreted safely. |
 
+## Financing support admission boundary
+
+The implemented SAC and Price boundary supports only the fixed-principal,
+effective-monthly-rate case defined above. A positive financing fee, insurance
+amount, transaction cost, extraordinary amortization, or requested nonzero
+indexation is an `unsupported_contract_clause`; explicit zero declarations
+remain accepted exclusions. Nonzero FGTS, subsidy, and tax requests remain
+`unsupported_rule`.
+
+Future support for correction or indexation, fees, or insurance requires an
+approved ADR before implementation. That ADR must define the contractual
+semantics, ledger treatment, posting order and rounding, compatibility effect,
+unsupported variants, and independent synthetic references. A deterministic
+input representation alone does not admit a financial clause.
+
+Complete observed, contractual, rule, and projected-assumption classification
+for the real reference case belongs only to the schema-versioned private
+reproducible envelope governed by
+[reference-case governance](reference-case-governance.md). The financing
+domain does not duplicate that envelope or its provenance contract.
+
 ## Frontend boundary
 
 The backend financial domain is authoritative. The frontend may collect inputs, display backend results, format values, and validate presentation state. It may not calculate interest, amortization, corrections, balances, assets, net worth, ranking, sensitivity, or break-even values. Frontend types must be generated from or validated against the versioned backend contract.
@@ -189,6 +210,7 @@ The backend financial domain is authoritative. The frontend may collect inputs, 
 - Property appreciation, inflation, monetary correction, fees, insurance, taxes, and extraordinary amortization.
 - FGTS, MCMV, and all other eligibility rules.
 - SAC and Price implementations are limited to their accepted contracts and
-  the existing `sac_basic` and `price_basic` synthetic regression checkpoints.
-  Additional synthetic fixtures, independent reference schedules, and all
-  other financial implementations remain deferred.
+  the existing `sac_basic`, `price_basic`, and
+  `financing_unsupported_clauses` synthetic references. Additional synthetic
+  schedule checkpoints, independent reference schedules, and all other
+  financial implementations remain deferred.

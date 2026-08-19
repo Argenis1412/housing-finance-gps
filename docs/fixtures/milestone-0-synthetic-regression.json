@@ -148,6 +148,65 @@
         }
       ]
     },
+    "financing_unsupported_clauses": {
+      "fixture_class": "synthetic_rejection_matrix",
+      "input_classification": {
+        "comparison_opening_cash": "observed_data",
+        "property_price": "contractual_data",
+        "cash_down_payment": "observed_data",
+        "principal": "contractual_data",
+        "term_months": "contractual_data",
+        "effective_monthly_rate": "contractual_data"
+      },
+      "purpose": "Assert that SAC and Price reject unsupported financing clauses without calculation.",
+      "cases": [
+        {
+          "name": "positive_fee",
+          "changes": { "fee_amount": "1.00" },
+          "expected_failure_code": "unsupported_contract_clause"
+        },
+        {
+          "name": "positive_insurance",
+          "changes": { "insurance_amount": "1.00" },
+          "expected_failure_code": "unsupported_contract_clause"
+        },
+        {
+          "name": "positive_transaction_cost",
+          "changes": { "transaction_cost_amount": "1.00" },
+          "expected_failure_code": "unsupported_contract_clause"
+        },
+        {
+          "name": "positive_extraordinary_amortization",
+          "changes": { "extraordinary_amortization_amount": "1.00" },
+          "expected_failure_code": "unsupported_contract_clause"
+        },
+        {
+          "name": "nonzero_indexation",
+          "changes": { "indexation": "requested_nonzero" },
+          "expected_failure_code": "unsupported_contract_clause"
+        },
+        {
+          "name": "fgts_rule",
+          "changes": { "fgts_amount": "1.00" },
+          "expected_failure_code": "unsupported_rule"
+        },
+        {
+          "name": "subsidy_rule",
+          "changes": { "subsidy_amount": "1.00" },
+          "expected_failure_code": "unsupported_rule"
+        },
+        {
+          "name": "tax_rule",
+          "changes": { "tax_amount": "1.00" },
+          "expected_failure_code": "unsupported_rule"
+        },
+        {
+          "name": "malformed_fee",
+          "changes": { "fee_amount": "1.0" },
+          "expected_failure_code": "invalid_input"
+        }
+      ]
+    },
     "consortium_credit_right": {
       "input_classification": {
         "comparison_opening_cash": "observed_data",
