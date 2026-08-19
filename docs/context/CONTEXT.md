@@ -14,8 +14,11 @@
   Issue #11 and PR #16 / Issue #15 respectively. PR #18 / Issue #17 harden
   their unsupported-clause boundary and synthetic invariants without adding a
   new financial behavior. PR #20 / Issue #19 merge the deterministic
-  rent-plus-investment foundation and neutral common-ledger ownership. No API,
-  frontend, persistence, CI, or dependency toolchain is configured.
+  rent-plus-investment foundation and neutral common-ledger ownership. The
+  retained v1 financing replay evaluator emits and reexecutes sealed,
+  versioned SAC and Price envelopes without live financing or ledger
+  dependencies. No API, frontend, persistence, CI, or dependency toolchain is
+  configured.
 - **Repository state:** Git is available. Work follows the issue-first,
   issue-numbered-branch, draft-pull-request workflow in the development
   process.
@@ -24,11 +27,11 @@
   verifiable financing-replay admission are documented in ADRs. A synthetic
   regression reference and a selected, unconfigured QA baseline complete
   Milestone 0 documentation.
-- **Current priority:** A separately approved implementation plan for the
-  versioned financing replay contract is the recommended next Track C work
-  item. Fixed monthly financing-fee admission remains blocked until that
-  contract is implemented; insurance and nonzero indexation remain deferred.
-  Any financial or architecture-critical work remains Track C approval-gated.
+- **Current priority:** Fixed monthly financing-fee admission remains blocked
+  pending its own approved Track C admission record. The retained v1 replay
+  contract now protects historical pre-fee evidence; insurance and nonzero
+  indexation remain deferred. Any financial or architecture-critical work
+  remains Track C approval-gated.
 
 ## Approved direction
 
@@ -61,6 +64,8 @@ The canonical scope and acceptance criteria are in the
 | `domain/financing/contracts.py` | Shared financing request, normalization, canonical failures, and immutable contractual schedule rows. |
 | `domain/financing/sac.py` | Pure SAC schedule calculation using the shared financing boundary. |
 | `domain/financing/price.py` | Pure Price schedule calculation using exact rational installment arithmetic. |
+| `domain/financing/replay_v1.py` | Self-contained historical v1 financing evaluator and complete canonical trace projection. |
+| `domain/financing/replay.py` | Immutable replay envelope, v1 emission, and fail-closed historical dispatcher. |
 | `domain/rent_plus_investment.py` | Pure rent-plus-investment postings, feasibility boundary, and 60-month comparison ledger. |
 | `tests/` | Synthetic-only regression and boundary tests for SAC, Price, and rent-plus-investment. |
 | `.claude/` | Claude-specific adapters that defer to repository-owned rules. |
@@ -82,14 +87,16 @@ those rules.
 ## QA status
 
 The financing domain has a standard-library unit-test suite: `uv run --offline
---no-project python -m unittest discover -s tests -t . -v` passes 36
+--no-project python -m unittest discover -s tests -t . -v` passes 44
 synthetic-only tests. The suite protects monetary and rate validation,
 unsupported-case classification, posted-centavo SAC rounding and settlement,
 Price exact-rational installments, posted-centavo rounding and settlement,
 caller-context independence, separate schedule and ledger time domains,
 synthetic fixture checkpoints, synthetic unsupported-clause parity, schedule
 and ledger invariants, rent-plus month-0 allocation and feasibility,
-determinism, and immutability.
+determinism, immutability, canonical versioned financing replay, full-trace
+equivalence, historical positive-fee failure preservation, and the v1
+600-month schedule boundary.
 
 Linting, formatting, static type checking, contract tests, frontend tests,
 browser tests, package pinning, and CI remain unconfigured. Milestone 0
