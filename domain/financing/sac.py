@@ -17,6 +17,12 @@ from domain.financing.contracts import (
     post_decimal,
 )
 from domain.values import DomainFailure
+from domain.financing.v2 import (
+    FinancingV2Result,
+    NormalizedV2FinancingInput,
+    calculate_sac_v2 as _calculate_sac_v2,
+    normalize_sac_request_v2 as _normalize_sac_request_v2,
+)
 
 
 SACRequest = FinancingRequest
@@ -43,6 +49,16 @@ def calculate_sac(input_value: NormalizedSACInput) -> SACResult:
         schedule = _build_contractual_schedule(input_value)
         ledger = build_financing_comparison_ledger(input_value, schedule)
     return SACResult(contractual_schedule=schedule, comparison_ledger=ledger)
+
+
+def normalize_sac_request_v2(request: SACRequest) -> NormalizedV2FinancingInput | DomainFailure:
+    """Select SAC v2 explicitly before normalization."""
+    return _normalize_sac_request_v2(request)
+
+
+def calculate_sac_v2(input_value: NormalizedV2FinancingInput) -> FinancingV2Result:
+    """Project the retained SAC v2 evaluator output."""
+    return _calculate_sac_v2(input_value)
 
 
 def _build_contractual_schedule(input_value: NormalizedSACInput) -> tuple[SACContractualRow, ...]:

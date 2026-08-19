@@ -13,8 +13,14 @@ from domain.financing.contracts import (
     FinancingContractualRow,
     FinancingRequest,
 )
-from domain.financing.price import PriceRequest, calculate_price, normalize_price_request
-from domain.financing.sac import SACRequest, normalize_sac_request
+from domain.financing.price import (
+    PriceRequest,
+    calculate_price,
+    calculate_price_v2,
+    normalize_price_request,
+    normalize_price_request_v2,
+)
+from domain.financing.sac import SACRequest, normalize_sac_request, normalize_sac_request_v2
 from domain.values import DomainFailure
 
 
@@ -44,6 +50,12 @@ def _normalized(**changes: object):
 def _failure(**changes: object) -> DomainFailure:
     result = normalize_price_request(_base_request(**changes))
     assert isinstance(result, DomainFailure)
+    return result
+
+
+def _normalized_v2(**changes: object):
+    result = normalize_price_request_v2(_base_request(**changes))
+    assert not isinstance(result, DomainFailure)
     return result
 
 
@@ -245,6 +257,66 @@ def test_price_accepts_the_same_explicit_zero_exclusions_as_sac() -> None:
     assert _failure(indexation="requested_nonzero").code == "unsupported_contract_clause"
 
 
+def test_price_v2_fixed_fee_is_explicit_and_does_not_change_principal_path() -> None:
+    result = calculate_price_v2(_normalized_v2(fee_amount="2.50"))
+    first = result.contractual_schedule[0]
+    assert first.fee.as_string == "2.50"
+    assert first.payment.as_string == "109.12"
+    assert result.comparison_ledger[1].nonrecoverable_housing_cost.as_string == "14.50"
+    assert result.comparison_ledger[1].financing_principal_balance.as_string == "1105.38"
+
+
+def test_price_v2_absent_and_zero_fee_preserve_financial_values() -> None:
+    absent = calculate_price_v2(_normalized_v2())
+    zero = calculate_price_v2(_normalized_v2(fee_amount="0.00"))
+    assert absent == zero
+    assert all(row.fee.as_string == "0.00" for row in absent.contractual_schedule)
+
+
+def test_price_v2_matches_independent_centavo_checkpoints() -> None:
+    result = calculate_price_v2(_normalized_v2(fee_amount="2.50"))
+    rows = (result.contractual_schedule[0], result.contractual_schedule[5], result.contractual_schedule[11])
+    assert [
+        (
+            row.month,
+            row.interest.as_string,
+            row.amortization.as_string,
+            row.fee.as_string,
+            row.payment.as_string,
+            row.closing_principal_balance.as_string,
+        )
+        for row in rows
+    ] == [
+        (1, "12.00", "94.62", "2.50", "109.12", "1105.38"),
+        (6, "7.17", "99.45", "2.50", "109.12", "617.89"),
+        (12, "1.06", "105.54", "2.50", "109.10", "0.00"),
+    ]
+    ledger = result.comparison_ledger
+    assert (
+        ledger[6].cash.as_string,
+        ledger[6].nonrecoverable_housing_cost.as_string,
+        ledger[6].cumulative_housing_cost.as_string,
+    ) == ("19045.28", "9.67", "72.61")
+    assert (
+        ledger[12].cash.as_string,
+        ledger[12].cumulative_housing_cost.as_string,
+        ledger[13].cash.as_string,
+        ledger[13].nonrecoverable_housing_cost.as_string,
+        ledger[13].cumulative_housing_cost.as_string,
+    ) == ("18390.58", "109.42", "18390.58", "0.00", "109.42")
+
+
+def test_v2_normalized_inputs_cannot_cross_strategy_boundaries() -> None:
+    normalized = normalize_sac_request_v2(_base_request(fee_amount="2.50"))
+    assert not isinstance(normalized, DomainFailure)
+    try:
+        calculate_price_v2(normalized)
+    except ValueError:
+        pass
+    else:
+        raise AssertionError("v2 normalized inputs must retain their selected strategy")
+
+
 def load_tests(
     loader: unittest.TestLoader,
     standard_tests: unittest.TestSuite,
@@ -262,5 +334,9 @@ def load_tests(
         test_price_schedule_and_ledger_invariants_hold_for_every_posted_period,
         test_price_outputs_are_deterministic_and_immutable,
         test_price_accepts_the_same_explicit_zero_exclusions_as_sac,
+        test_price_v2_fixed_fee_is_explicit_and_does_not_change_principal_path,
+        test_price_v2_absent_and_zero_fee_preserve_financial_values,
+        test_price_v2_matches_independent_centavo_checkpoints,
+        test_v2_normalized_inputs_cannot_cross_strategy_boundaries,
     )
     return unittest.TestSuite(unittest.FunctionTestCase(test) for test in tests)

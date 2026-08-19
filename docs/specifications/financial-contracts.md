@@ -81,7 +81,11 @@ Both SAC and Price require:
 - effective_monthly_rate: decimal rate greater than or equal to zero;
 - property_price and cash_down_payment for the month-0 purchase event.
 
-For the initial supported case, property_price equals cash_down_payment plus principal. FGTS, subsidies, transaction costs, taxes, insurance, fees, indexation, non-monthly rates, and extraordinary amortization are unsupported unless documented as zero.
+For the v1 supported case, property_price equals cash_down_payment plus
+principal. FGTS, subsidies, transaction costs, taxes, insurance, fees,
+indexation, non-monthly rates, and extraordinary amortization are unsupported
+unless documented as zero. The separately admitted v2 fixed monthly financing
+fee is defined below.
 
 At month 0, cash decreases by cash_down_payment, property_value increases by property_price, and financing_principal_balance becomes principal.
 
@@ -91,7 +95,9 @@ For each financing month, the opening balance is the prior posted closing financ
 
 1. Calculate and post interest from opening balance and effective monthly rate.
 2. Determine and post amortization.
-3. Post payment as interest plus amortization.
+3. For v1, post payment as interest plus amortization. For the admitted v2
+   fixed-fee contract, post the separate monthly fee and payment as interest
+   plus amortization plus fee.
 4. Post closing principal as opening balance minus amortization.
 
 Interest is the opening posted balance multiplied by the effective monthly rate,
@@ -197,14 +203,41 @@ The future versioned API maps these stable machine-readable categories to safe P
 
 ## Financing support admission boundary
 
-The implemented SAC and Price boundary supports only the fixed-principal,
+The implemented v1 SAC and Price boundary supports only the fixed-principal,
 effective-monthly-rate case defined above. A positive financing fee, insurance
 amount, transaction cost, extraordinary amortization, or requested nonzero
 indexation is an `unsupported_contract_clause`; explicit zero declarations
 remain accepted exclusions. Nonzero FGTS, subsidy, and tax requests remain
 `unsupported_rule`.
 
-Future support for correction or indexation, fees, or insurance requires the
+### Versioned fixed monthly fee admission
+
+Issue #31 admits a fixed monthly fee only through explicit v2 SAC and Price
+entry points. The existing entry points remain v1 and continue to reject a
+positive `fee_amount`; version selection is never inferred from request values.
+
+The v2 fee is a non-negative exact-two-fraction nominal BRL amount posted in
+contractual months `1..term_months`. It is not posted in month 0 or after
+settlement. Each v2 schedule row contains a separate `fee` field and uses:
+
+    payment = interest + amortization + fee
+    nonrecoverable_housing_cost = interest + fee
+
+Cash is reduced by the posted payment, while principal balance, amortization,
+interest, property value, and liabilities retain their existing semantics.
+Aggregate monetary values use `ROUND_HALF_UP`. Absence and
+`fee_amount="0.00"` have identical v2 financial values; v1 retains its
+historical structural output.
+
+The v2 replay contract uses `financing-replay-v2`,
+`financing-fixed-principal-v2`, and `financing-ruleset-v1`. Replay selects a
+version-specific codec-handler before parsing request or outcome contents.
+The v2 evaluator is the single semantic authority; live v2 results are
+projections of its canonical outcome. Unknown handlers, malformed evidence,
+and mismatches fail closed as `incompatible_contract_version`.
+
+Future support for correction or indexation, insurance, or any fee variant
+beyond the admitted fixed monthly fee requires the
 admission evidence in [ADR-0005](../adr/0005-financing-extension-admission-boundary.md)
 and the replay contract in [ADR-0006](../adr/0006-versioned-financing-replay-contract.md)
 before implementation. A deterministic input representation or retained result

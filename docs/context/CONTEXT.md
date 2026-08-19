@@ -28,11 +28,12 @@
   verifiable financing-replay admission are documented in ADRs. A synthetic
   regression reference and a selected, partially configured QA baseline complete
   Milestone 0 documentation.
-- **Current priority:** Fixed monthly financing-fee admission remains blocked
-  pending its own approved Track C admission record. The retained v1 replay
-  contract now protects historical pre-fee evidence; insurance and nonzero
-  indexation remain deferred. Any financial or architecture-critical work
-  remains Track C approval-gated.
+- **Current priority:** Fixed monthly financing-fee admission is implemented
+  on the Issue #31 Track C branch through explicit v2 SAC and Price entry
+  points and a version-selected replay codec. v1 live behavior and retained
+  positive-fee rejection remain unchanged; insurance and nonzero indexation
+  remain deferred. Any financial or architecture-critical work remains Track
+  C approval-gated.
 
 ## Approved direction
 
@@ -66,7 +67,9 @@ The canonical scope and acceptance criteria are in the
 | `domain/financing/sac.py` | Pure SAC schedule calculation using the shared financing boundary. |
 | `domain/financing/price.py` | Pure Price schedule calculation using exact rational installment arithmetic. |
 | `domain/financing/replay_v1.py` | Self-contained historical v1 financing evaluator and complete canonical trace projection. |
-| `domain/financing/replay.py` | Immutable replay envelope, v1 emission, and fail-closed historical dispatcher. |
+| `domain/financing/replay_v2.py` | Versioned v2 fixed-fee evaluator, codec validation, and canonical trace authority. |
+| `domain/financing/replay.py` | Immutable neutral replay envelope, versioned emission, and fail-closed dispatcher. |
+| `domain/financing/v2.py` | Explicit v2 SAC/Price live projections over the retained v2 evaluator. |
 | `domain/rent_plus_investment.py` | Pure rent-plus-investment postings, feasibility boundary, and 60-month comparison ledger. |
 | `tests/` | Synthetic-only regression and boundary tests for SAC, Price, financing replay (`tests/test_financing_replay.py`), and rent-plus-investment. |
 | `.claude/` | Claude-specific adapters that defer to repository-owned rules. |
@@ -88,7 +91,7 @@ those rules.
 ## QA status
 
 The financing domain has a standard-library unit-test suite: `uv run --offline
---no-project python -m unittest discover -s tests -t . -v` passes 45
+--no-project python -m unittest discover -s tests -t . -v` passes 59
 synthetic-only tests. The suite protects monetary and rate validation,
 unsupported-case classification, posted-centavo SAC rounding and settlement,
 Price exact-rational installments, posted-centavo rounding and settlement,
@@ -97,7 +100,9 @@ synthetic fixture checkpoints, synthetic unsupported-clause parity, schedule
 and ledger invariants, rent-plus month-0 allocation and feasibility,
 determinism, immutability, canonical versioned financing replay, full-trace
 equivalence, historical positive-fee failure preservation, and the v1
-600-month schedule boundary.
+600-month schedule boundary, explicit and cumulative v2 fee posting, v2
+financial parity for absent and zero fees, independent SAC and Price centavo
+checkpoints, and version-specific replay codecs.
 
 Ruff 0.16.0 is configured for Python 3.13 with the conservative `E4`, `E7`,
 `E9`, and `F` rule selection. GitHub Actions runs that lint command and the

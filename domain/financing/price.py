@@ -19,6 +19,12 @@ from domain.financing.contracts import (
 )
 from domain.ledger import post_nonnegative_fraction
 from domain.values import DomainFailure
+from domain.financing.v2 import (
+    FinancingV2Result,
+    NormalizedV2FinancingInput,
+    calculate_price_v2 as _calculate_price_v2,
+    normalize_price_request_v2 as _normalize_price_request_v2,
+)
 
 
 PriceRequest = FinancingRequest
@@ -45,6 +51,16 @@ def calculate_price(input_value: NormalizedPriceInput) -> PriceResult:
         schedule = _build_contractual_schedule(input_value)
         ledger = build_financing_comparison_ledger(input_value, schedule)
     return PriceResult(contractual_schedule=schedule, comparison_ledger=ledger)
+
+
+def normalize_price_request_v2(request: PriceRequest) -> NormalizedV2FinancingInput | DomainFailure:
+    """Select Price v2 explicitly before normalization."""
+    return _normalize_price_request_v2(request)
+
+
+def calculate_price_v2(input_value: NormalizedV2FinancingInput) -> FinancingV2Result:
+    """Project the retained Price v2 evaluator output."""
+    return _calculate_price_v2(input_value)
 
 
 def _build_contractual_schedule(input_value: NormalizedPriceInput) -> tuple[PriceContractualRow, ...]:
