@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from dataclasses import FrozenInstanceError
 from decimal import Decimal, ROUND_DOWN, localcontext
+import inspect
 import json
 from pathlib import Path
 import unittest
@@ -160,6 +161,7 @@ def test_half_cent_return_and_rent_adjustment_post_exactly_half_up() -> None:
 def test_invalid_representations_signs_and_periods_fail_closed() -> None:
     for changes in (
         {"starting_monthly_rent": "1.0"},
+        {"comparison_opening_cash": "-0.01"},
         {"initial_invested_capital": "-0.01"},
         {"monthly_contribution": "-0.01"},
         {"rent_adjustment_rate_value": "-0.01"},
@@ -234,17 +236,9 @@ def load_tests(
     pattern: str | None,
 ) -> unittest.TestSuite:
     """Expose function tests without adding test-only implementation classes."""
-    tests = (
-        test_synthetic_rent_plus_fixture_checkpoints_are_exact,
-        test_rent_plus_uses_the_neutral_ledger_and_full_comparison_domain,
-        test_every_rent_plus_posting_and_ledger_identity_reconciles,
-        test_zero_capital_contribution_and_return_are_supported,
-        test_adjustment_after_the_comparison_horizon_is_valid_without_adjustment,
-        test_half_cent_return_and_rent_adjustment_post_exactly_half_up,
-        test_invalid_representations_signs_and_periods_fail_closed,
-        test_rate_conventions_are_rejected_even_for_zero_rates,
-        test_closed_unsupported_requests_have_canonical_failure_categories,
-        test_initial_and_monthly_cash_shortfalls_return_infeasible_without_result,
-        test_rent_plus_outputs_are_deterministic_context_independent_and_immutable,
-    )
+    tests = [
+        value
+        for name, value in sorted(globals().items())
+        if name.startswith("test_") and inspect.isfunction(value)
+    ]
     return unittest.TestSuite(unittest.FunctionTestCase(test) for test in tests)

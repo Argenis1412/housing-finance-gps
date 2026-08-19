@@ -59,7 +59,7 @@ The canonical scope and acceptance criteria are in the
 | `domain/financing/sac.py` | Pure SAC schedule calculation using the shared financing boundary. |
 | `domain/financing/price.py` | Pure Price schedule calculation using exact rational installment arithmetic. |
 | `domain/rent_plus_investment.py` | Pure rent-plus-investment postings, feasibility boundary, and 60-month comparison ledger. |
-| `tests/` | Synthetic-only regression and boundary tests for SAC and Price. |
+| `tests/` | Synthetic-only regression and boundary tests for SAC, Price, and rent-plus-investment. |
 | `.claude/` | Claude-specific adapters that defer to repository-owned rules. |
 | `.project/` | Optional mechanical review-plan gate artifacts. |
 | `scripts/` | Optional workflow enforcement scripts; not application code. |

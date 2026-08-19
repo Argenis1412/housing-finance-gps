@@ -117,6 +117,8 @@ def normalize_rent_plus_investment_request(
 
     if type(request.first_rent_adjustment_month) is not int or request.first_rent_adjustment_month <= 1:
         return _invalid("first_rent_adjustment_month must be an integer greater than one")
+    if normalized_money["comparison_opening_cash"].amount < _ZERO:
+        return _invalid("comparison_opening_cash cannot be negative")
     if normalized_money["starting_monthly_rent"].amount <= _ZERO:
         return _invalid("starting_monthly_rent must be positive")
     if normalized_money["initial_invested_capital"].amount < _ZERO:
