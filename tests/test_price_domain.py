@@ -63,6 +63,18 @@ def test_strategies_share_the_neutral_request_and_normalization_boundary() -> No
         assert price.code == sac.code
 
 
+def test_synthetic_unsupported_clause_matrix_has_sac_price_failure_parity() -> None:
+    fixture = json.loads(FIXTURE_PATH.read_text(encoding="utf-8"))
+    matrix = fixture["fixtures"]["financing_unsupported_clauses"]
+    for case in matrix["cases"]:
+        price = normalize_price_request(_base_request(**case["changes"]))
+        sac = normalize_sac_request(_base_request(**case["changes"]))
+        assert isinstance(price, DomainFailure), case["name"]
+        assert isinstance(sac, DomainFailure), case["name"]
+        assert price.code == case["expected_failure_code"], case["name"]
+        assert sac.code == price.code, case["name"]
+
+
 def test_price_fixture_checkpoints_are_exact() -> None:
     fixture = json.loads(FIXTURE_PATH.read_text(encoding="utf-8"))
     price = fixture["fixtures"]["price_basic"]
@@ -154,6 +166,43 @@ def test_price_uses_shared_rows_and_separate_time_domains() -> None:
     assert result.comparison_ledger[-1].financing_principal_balance.as_string == "1200.00"
 
 
+def test_price_schedule_and_ledger_invariants_hold_for_every_posted_period() -> None:
+    result = calculate_price(_normalized())
+    previous_closing = None
+    for row in result.contractual_schedule:
+        if previous_closing is not None:
+            assert row.opening_principal_balance.amount == previous_closing
+        assert row.opening_principal_balance.amount >= Decimal("0.00")
+        assert row.amortization.amount >= Decimal("0.00")
+        assert row.closing_principal_balance.amount >= Decimal("0.00")
+        assert row.payment.amount == row.interest.amount + row.amortization.amount
+        assert row.closing_principal_balance.amount == (
+            row.opening_principal_balance.amount - row.amortization.amount
+        )
+        previous_closing = row.closing_principal_balance.amount
+    assert result.contractual_schedule[-1].closing_principal_balance.amount == Decimal("0.00")
+
+    previous_row = None
+    for row in result.comparison_ledger:
+        assert row.total_liabilities.amount == (
+            row.financing_principal_balance.amount + row.consortium_credit_obligation_balance.amount
+        )
+        assert row.home_equity.amount == row.property_value.amount - row.total_liabilities.amount
+        assert row.liquidity.amount == row.cash.amount + row.liquid_financial_assets.amount
+        assert row.net_worth.amount == (
+            row.cash.amount
+            + row.liquid_financial_assets.amount
+            + row.consortium_credit_right_balance.amount
+            + row.property_value.amount
+            - row.total_liabilities.amount
+        )
+        expected_cumulative_cost = row.nonrecoverable_housing_cost.amount
+        if previous_row is not None:
+            expected_cumulative_cost += previous_row.cumulative_housing_cost.amount
+        assert row.cumulative_housing_cost.amount == expected_cumulative_cost
+        previous_row = row
+
+
 def test_price_outputs_are_deterministic_and_immutable() -> None:
     first = calculate_price(_normalized())
     assert first == calculate_price(_normalized())
@@ -194,11 +243,13 @@ def load_tests(
     """Expose function tests without adding test-only implementation classes."""
     tests = (
         test_strategies_share_the_neutral_request_and_normalization_boundary,
+        test_synthetic_unsupported_clause_matrix_has_sac_price_failure_parity,
         test_price_fixture_checkpoints_are_exact,
         test_zero_rate_regular_payment_uses_exact_half_up_posting,
         test_nonzero_rate_regular_payment_uses_exact_half_up_posting,
         test_price_is_independent_of_the_callers_decimal_context,
         test_price_uses_shared_rows_and_separate_time_domains,
+        test_price_schedule_and_ledger_invariants_hold_for_every_posted_period,
         test_price_outputs_are_deterministic_and_immutable,
         test_price_accepts_the_same_explicit_zero_exclusions_as_sac,
     )
