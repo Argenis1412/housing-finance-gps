@@ -165,6 +165,11 @@ The backend financial domain is authoritative. The frontend may collect inputs, 
 ## Deferred work
 
 - API wire schemas and OpenAPI generation.
+- Price financing and the shared comparison-contract and version envelope.
+- The consortium and rent-plus-investment implementations.
 - Property appreciation, inflation, monetary correction, fees, insurance, taxes, and extraordinary amortization.
 - FGTS, MCMV, and all other eligibility rules.
-- Synthetic fixtures, independent reference schedules, and implementation.
+- SAC implementation is limited to its accepted contract and the existing
+  `sac_basic` synthetic regression checkpoints. Additional synthetic fixtures,
+  independent reference schedules, and all other financial implementations
+  remain deferred.

@@ -83,7 +83,11 @@ are not installed, pinned, configured, or run by this milestone.
 
 Exact commands, package versions, workflow configuration, API endpoints, and
 OpenAPI-to-TypeScript generation tooling remain deferred until their own
-approved implementation work item. No QA command is configured at this time.
+approved implementation work item. This historical baseline did not configure
+those tools. Separately, the merged SAC implementation now has a
+standard-library test suite with 13 synthetic-only passing tests; it does not
+constitute configured linting, type checking, API, frontend, browser, or CI
+tooling.
 
 ## Validation requirements for this artifact
 
@@ -93,14 +97,16 @@ approved implementation work item. No QA command is configured at this time.
   real proposal material, private export material, or commitment secret.
 - Check relative Markdown links and the cross-links to the two accepted
   contracts.
-- When application tests exist, make every fixture checkpoint a zero-tolerance
-  deterministic regression assertion and add separate tests for all typed
-  unsupported-case failures.
+- The merged SAC implementation asserts every `sac_basic` checkpoint with zero
+  tolerance and covers its supported typed unsupported-case failures. Apply the
+  same requirement to each later supported strategy.
 
 ## Deferred work
 
-- Executable fixture schema validation and financial regression tests.
+- Executable fixture schema validation and financial regression tests for Price,
+  consortium, and rent-plus-investment.
 - Tool installation, version pinning, scripts, and CI configuration.
-- FastAPI, Python-domain, Next.js, TypeScript, persistence, and browser code.
+- FastAPI, Next.js, TypeScript, persistence, browser code, and Python-domain
+  work beyond the implemented SAC slice.
 - Any real-case export, signing, encryption, or automated local-validation
   tooling.
