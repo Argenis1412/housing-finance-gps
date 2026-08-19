@@ -16,15 +16,13 @@ only after the calculation engine has been validated.
 
 Milestone 0 documentation is ready: governance, provenance, financial
 contracts, a synthetic regression reference, and a selected (but unconfigured)
-QA baseline are recorded. PR #12 merged the first Milestone 1 slice: the sole
-implemented financial behavior is a pure deterministic SAC domain. It provides
-immutable value and failure types, request normalization, a contractual
-schedule, and a 60-month comparison ledger. Its 13 synthetic-only
-standard-library tests pass.
+QA baseline are recorded. The implemented deterministic domain includes SAC,
+Price, a neutral 60-month comparison ledger, and rent-plus-investment. Its 36
+synthetic-only standard-library tests pass.
 
-Price, comparison contracts and their version envelope, API, frontend,
-persistence, CI, dependencies, consortium, rent-plus-investment, eligibility
-rules, and real financial data remain unimplemented or out of scope.
+Comparison contracts beyond the neutral ledger and version envelope, API,
+frontend, persistence, CI, dependencies, consortium, eligibility rules, and
+real financial data remain unimplemented or out of scope.
 
 See [current context](docs/context/CONTEXT.md) for the exact active priority.
 
