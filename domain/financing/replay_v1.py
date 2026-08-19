@@ -52,6 +52,7 @@ _OPTIONAL_MONEY_FIELDS = (
     "extraordinary_amortization_amount",
 )
 _ZERO = Decimal("0.00")
+_MAX_RATE_FRACTION_DIGITS = 12
 
 
 @dataclass(frozen=True, slots=True)
@@ -219,12 +220,12 @@ def _rate(raw_value: object, convention: object) -> Decimal | _Failure:
     if not rate.is_finite():
         return _invalid("rate value and convention must be finite decimal and string values")
     if convention != "effective_monthly":
-        if rate == Decimal("0"):
-            return Decimal("0")
         return _Failure("unsupported_rate_convention", "rate convention is not supported")
+    if max(0, -rate.as_tuple().exponent) > _MAX_RATE_FRACTION_DIGITS:
+        return _invalid("effective_monthly rate has too many fractional digits")
     if rate < Decimal("0"):
         return _invalid("effective_monthly rate must be non-negative")
-    return rate
+    return rate.normalize()
 
 
 def _trace(normalized: dict[str, object], strategy: Strategy) -> dict[str, object]:
@@ -327,7 +328,7 @@ def _normalized_projection(normalized: dict[str, object]) -> dict[str, object]:
     return {
         "cash_down_payment": _money_string(_decimal(normalized["cash_down_payment"])),
         "comparison_opening_cash": _money_string(_decimal(normalized["comparison_opening_cash"])),
-        "effective_monthly_rate": format(_decimal(normalized["effective_monthly_rate"]), "f"),
+        "effective_monthly_rate": format(_decimal(normalized["effective_monthly_rate"]).normalize(), "f"),
         "principal": _money_string(_decimal(normalized["principal"])),
         "property_price": _money_string(_decimal(normalized["property_price"])),
         "term_months": _integer(normalized["term_months"]),

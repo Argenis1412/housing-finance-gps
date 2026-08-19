@@ -15,7 +15,8 @@
   their unsupported-clause boundary and synthetic invariants without adding a
   new financial behavior. PR #20 / Issue #19 merge the deterministic
   rent-plus-investment foundation and neutral common-ledger ownership. The
-  retained v1 financing replay evaluator emits and reexecutes sealed,
+  PR #26 / Issue #25 delivered the retained v1 financing replay evaluator,
+  which emits and reexecutes sealed,
   versioned SAC and Price envelopes without live financing or ledger
   dependencies. No API, frontend, persistence, CI, or dependency toolchain is
   configured.
@@ -67,7 +68,7 @@ The canonical scope and acceptance criteria are in the
 | `domain/financing/replay_v1.py` | Self-contained historical v1 financing evaluator and complete canonical trace projection. |
 | `domain/financing/replay.py` | Immutable replay envelope, v1 emission, and fail-closed historical dispatcher. |
 | `domain/rent_plus_investment.py` | Pure rent-plus-investment postings, feasibility boundary, and 60-month comparison ledger. |
-| `tests/` | Synthetic-only regression and boundary tests for SAC, Price, and rent-plus-investment. |
+| `tests/` | Synthetic-only regression and boundary tests for SAC, Price, financing replay (`tests/test_financing_replay.py`), and rent-plus-investment. |
 | `.claude/` | Claude-specific adapters that defer to repository-owned rules. |
 | `.project/` | Optional mechanical review-plan gate artifacts. |
 | `scripts/` | Optional workflow enforcement scripts; not application code. |

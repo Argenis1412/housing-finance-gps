@@ -3,7 +3,9 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from collections.abc import Mapping
 import re
+from types import MappingProxyType
 from typing import Callable, Literal
 
 from domain.financing import replay_v1
@@ -77,15 +79,15 @@ def replay_financing(envelope: SimulationReplayEnvelope) -> ReplayVerification |
         ]
         replay_v1.parse_canonical_object(envelope.raw_request_jcs)
         replay_v1.validate_outcome(envelope.sealed_outcome_jcs)
-        reproduced = handler(envelope.raw_request_jcs, envelope.strategy)
     except (AttributeError, KeyError, TypeError, ValueError):
         return DomainFailure("incompatible_contract_version", "historical replay equivalence cannot be proven")
+    reproduced = handler(envelope.raw_request_jcs, envelope.strategy)
     if reproduced.outcome_jcs != envelope.sealed_outcome_jcs:
         return DomainFailure("incompatible_contract_version", "historical replay equivalence cannot be proven")
     return ReplayVerification(envelope)
 
 
-_HANDLERS: dict[tuple[str, str, str, Strategy], Callable[[str, Strategy], replay_v1.V1Evaluation]] = {
+_HANDLERS: Mapping[tuple[str, str, str, Strategy], Callable[[str, Strategy], replay_v1.V1Evaluation]] = MappingProxyType({
     (replay_v1.CONTRACT_SCHEMA_VERSION, replay_v1.ENGINE_VERSION, replay_v1.RULESET_VERSION, "sac"): replay_v1.evaluate,
     (replay_v1.CONTRACT_SCHEMA_VERSION, replay_v1.ENGINE_VERSION, replay_v1.RULESET_VERSION, "price"): replay_v1.evaluate,
-}
+})
