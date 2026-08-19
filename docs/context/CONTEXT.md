@@ -20,13 +20,15 @@
   issue-numbered-branch, draft-pull-request workflow in the development
   process.
 - **Architecture:** Product direction is approved. Reference-case governance,
-  simulation provenance, financial conventions, and backend authority are
-  documented in ADRs. A synthetic regression reference and a selected,
-  unconfigured QA baseline complete Milestone 0 documentation.
-- **Current priority:** A separately approved, fees-only Track C admission
-  proposal is the recommended next work item. Insurance and nonzero indexation
-  remain deferred; any financial or architecture-critical work remains Track C
-  approval-gated.
+  simulation provenance, financial conventions, backend authority, and
+  verifiable financing-replay admission are documented in ADRs. A synthetic
+  regression reference and a selected, unconfigured QA baseline complete
+  Milestone 0 documentation.
+- **Current priority:** A separately approved implementation plan for the
+  versioned financing replay contract is the recommended next Track C work
+  item. Fixed monthly financing-fee admission remains blocked until that
+  contract is implemented; insurance and nonzero indexation remain deferred.
+  Any financial or architecture-critical work remains Track C approval-gated.
 
 ## Approved direction
 
