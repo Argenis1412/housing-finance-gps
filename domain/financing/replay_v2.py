@@ -61,23 +61,33 @@ def parse_canonical_object(text: object) -> dict[str, object]:
 def evaluate(raw_request_jcs: str, strategy: Strategy) -> str:
     """Evaluate one v2 request and return its canonical outcome."""
     request = parse_canonical_object(raw_request_jcs)
-    if set(request) != _REQUIRED_FIELDS:
+    if frozenset(request) != _REQUIRED_FIELDS:
         raise ValueError("v2 raw request fields are incomplete")
     fee = _fee(request["fee_amount"])
     if isinstance(fee, str):
         return fee
     fee_free = dict(request)
     fee_free["fee_amount"] = "0.00"
-    base = json.loads(replay_v1.evaluate(canonical_json(fee_free), strategy).outcome_jcs)
+    base = replay_v1.parse_canonical_object(
+        replay_v1.evaluate(canonical_json(fee_free), strategy).outcome_jcs
+    )
     if base.get("kind") != "success":
         return canonical_json(base)
     trace = base["trace"]
+    if not isinstance(trace, dict):
+        raise ValueError("v1 success trace is invalid")
     schedule = trace["contractual_schedule"]
     ledger = trace["comparison_ledger"]
+    if not isinstance(schedule, list) or not isinstance(ledger, list):
+        raise ValueError("v1 success trace rows are invalid")
     for row in schedule:
+        if not isinstance(row, dict):
+            raise ValueError("v1 schedule row is invalid")
         row["fee"] = fee.as_string
         row["payment"] = _post(Fraction(row["payment"]) + Fraction(fee.amount))
     for row in ledger:
+        if not isinstance(row, dict):
+            raise ValueError("v1 ledger row is invalid")
         month = row["month"]
         if not isinstance(month, int):
             continue
@@ -92,7 +102,10 @@ def evaluate(raw_request_jcs: str, strategy: Strategy) -> str:
         )
         row["liquidity"] = row["cash"]
         row["net_worth"] = _post(Fraction(row["net_worth"]) - accumulated_fee)
-    normalized = dict(base["normalized_input"])
+    normalized_input = base["normalized_input"]
+    if not isinstance(normalized_input, dict):
+        raise ValueError("v1 normalized input is invalid")
+    normalized = dict(normalized_input)
     normalized["fee_amount"] = fee.as_string
     return canonical_json({"kind": "success", "normalized_input": normalized, "trace": trace})
 
@@ -125,7 +138,7 @@ def validate_outcome(outcome_jcs: object) -> None:
             raise ValueError("sealed ledger row is invalid")
 
 
-def _fee(raw_value: object) -> object:
+def _fee(raw_value: object) -> _Money | str:
     if raw_value is None:
         return _Money(_ZERO)
     if not isinstance(raw_value, str) or not _MONEY_PATTERN.fullmatch(raw_value):

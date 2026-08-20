@@ -87,13 +87,12 @@ this document records them as configured.
 | Formula-boundary review | Static source review plus API-contract tests | Reject authoritative interest, amortization, balance, ranking, sensitivity, and break-even calculations outside Python. |
 | CI | GitHub Actions; dependency review and secret scanning remain deferred | Repeatable checks using synthetic fixtures only. |
 
-Ruff 0.16.0 is configured with Python 3.13 and the conservative `E4`, `E7`,
-`E9`, and `F` selection. GitHub Actions runs the pinned Ruff command and the
-offline standard-library suite with read-only repository permissions. The
-merged financial-domain implementation has 45 synthetic-only passing tests.
-Type checking, formatting, API endpoints, OpenAPI-to-TypeScript generation,
-frontend, browser, dependency review, and secret scanning remain deferred
-until their own approved implementation work items.
+Ruff 0.16.0, Pyright strict checks, and pytest are configured through a locked
+Python 3.13 `uv` environment. GitHub Actions synchronizes the lockfile, then
+runs lint, type checking, and the synthetic-only suite with read-only
+repository permissions. Formatting, API endpoints, OpenAPI-to-TypeScript
+generation, frontend, browser, dependency review, and secret scanning remain
+deferred until their own approved implementation work items.
 
 ## Validation requirements for this artifact
 
@@ -117,8 +116,8 @@ until their own approved implementation work items.
 
 - Executable fixture schema validation and financial regression tests for
   consortium.
-- Type checking, formatting, dependency review, secret scanning, and further
-  CI configuration.
+- Formatting, dependency review, secret scanning, property-based testing,
+  coverage gates, and further CI configuration.
 - FastAPI, Next.js, TypeScript, persistence, browser code, and Python-domain
   work beyond the implemented SAC slice.
 - Any real-case export, signing, encryption, or automated local-validation

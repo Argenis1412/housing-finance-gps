@@ -6,7 +6,7 @@ from dataclasses import FrozenInstanceError
 from decimal import Decimal, ROUND_DOWN, localcontext
 import json
 from pathlib import Path
-import unittest
+from typing import Callable, cast
 
 from domain.financing.sac import (
     SACRequest,
@@ -32,7 +32,7 @@ def _base_request(**changes: object) -> SACRequest:
         "rate_convention": "effective_monthly",
     }
     values.update(changes)
-    return SACRequest(**values)  # type: ignore[arg-type]
+    return cast(Callable[..., SACRequest], SACRequest)(**values)
 
 
 def _normalized(**changes: object):
@@ -285,20 +285,20 @@ def test_outputs_are_deterministic_and_immutable() -> None:
     first = calculate_sac(normalized)
     assert first == calculate_sac(normalized)
     try:
-        first.contractual_schedule[0].month = 2  # type: ignore[misc]
+        setattr(first.contractual_schedule[0], "month", 2)
     except FrozenInstanceError:
         pass
     else:
         raise AssertionError("contractual rows must be immutable")
     try:
-        first.contractual_schedule += ()  # type: ignore[misc]
+        setattr(first, "contractual_schedule", ())
     except FrozenInstanceError:
         pass
     else:
         raise AssertionError("result collections must be immutable")
     failure = _failure(principal="1.0")
     try:
-        failure.code = "unsupported_rule"  # type: ignore[misc]
+        setattr(failure, "code", "unsupported_rule")
     except FrozenInstanceError:
         pass
     else:
@@ -383,39 +383,8 @@ def test_v2_outputs_are_context_independent_deterministic_and_immutable() -> Non
         assert calculate_sac_v2(normalized) == expected
 
     try:
-        expected.contractual_schedule[0].fee = BRLMoney("0.00")  # type: ignore[misc]
+        setattr(expected.contractual_schedule[0], "fee", BRLMoney("0.00"))
     except FrozenInstanceError:
         pass
     else:
         raise AssertionError("v2 contractual rows must be immutable")
-
-
-def load_tests(
-    loader: unittest.TestLoader,
-    standard_tests: unittest.TestSuite,
-    pattern: str | None,
-) -> unittest.TestSuite:
-    """Expose function tests without introducing a tenth implementation class."""
-    tests = (
-        test_money_requires_exact_contract_representation,
-        test_rate_and_term_validation_are_explicit,
-        test_normalization_rejects_invalid_exclusions_and_financing_relationships,
-        test_normalization_balance_check_ignores_callers_decimal_context,
-        test_non_monthly_zero_is_classified_before_effective_rate_construction,
-        test_closed_exclusions_use_canonical_failure_categories,
-        test_synthetic_unsupported_clause_matrix_matches_the_financing_boundary,
-        test_explicit_zero_exclusions_have_no_calculation_effect,
-        test_sac_rounding_and_final_settlement,
-        test_sac_is_independent_of_callers_decimal_context,
-        test_sac_accepts_large_two_fraction_amounts,
-        test_schedule_and_ledger_have_separate_time_domains,
-        test_sac_schedule_and_ledger_invariants_hold_for_every_posted_period,
-        test_synthetic_sac_fixture_checkpoints,
-        test_outputs_are_deterministic_and_immutable,
-        test_v2_fixed_fee_is_explicit_and_nonrecoverable,
-        test_v2_absent_and_zero_fee_preserve_financial_values,
-        test_v2_fee_validation_is_explicit_and_v1_remains_rejection_boundary,
-        test_v2_sac_matches_independent_centavo_checkpoints,
-        test_v2_outputs_are_context_independent_deterministic_and_immutable,
-    )
-    return unittest.TestSuite(unittest.FunctionTestCase(test) for test in tests)

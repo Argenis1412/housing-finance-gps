@@ -110,7 +110,9 @@ def money(amount: Decimal) -> BRLMoney:
 
 def normalize_brl_money(name: str, raw_value: object) -> BRLMoney | DomainFailure:
     """Normalize one exact-two-fraction BRL value at a domain boundary."""
+    if not isinstance(raw_value, str):
+        return DomainFailure("invalid_input", f"{name} must be an exact-two-fraction BRL string")
     try:
-        return BRLMoney(raw_value)  # type: ignore[arg-type]
+        return BRLMoney(raw_value)
     except ValueError:
         return DomainFailure("invalid_input", f"{name} must be an exact-two-fraction BRL string")

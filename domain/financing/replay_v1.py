@@ -127,7 +127,7 @@ def validate_outcome(outcome_jcs: object) -> None:
 
 def _parse_request(raw_request_jcs: str) -> dict[str, object] | _Failure:
     request = parse_canonical_object(raw_request_jcs)
-    if set(request) != _REQUIRED_FIELDS:
+    if frozenset(request) != _REQUIRED_FIELDS:
         raise ValueError("v1 raw request fields are incomplete")
     for name in ("comparison_opening_cash", "property_price", "cash_down_payment", "principal", "rate_value", "rate_convention", "indexation"):
         if not isinstance(request[name], str):
@@ -221,7 +221,8 @@ def _rate(raw_value: object, convention: object) -> Decimal | _Failure:
         return _invalid("rate value and convention must be finite decimal and string values")
     if convention != "effective_monthly":
         return _Failure("unsupported_rate_convention", "rate convention is not supported")
-    if max(0, -rate.as_tuple().exponent) > _MAX_RATE_FRACTION_DIGITS:
+    exponent = rate.as_tuple().exponent
+    if not isinstance(exponent, int) or max(0, -exponent) > _MAX_RATE_FRACTION_DIGITS:
         return _invalid("effective_monthly rate has too many fractional digits")
     if rate < Decimal("0"):
         return _invalid("effective_monthly rate must be non-negative")

@@ -4,10 +4,9 @@ from __future__ import annotations
 
 from dataclasses import FrozenInstanceError
 from decimal import Decimal, ROUND_DOWN, localcontext
-import inspect
 import json
 from pathlib import Path
-import unittest
+from typing import Callable, cast
 
 from domain.financing.contracts import ComparisonLedgerRow as FinancingLedgerRow
 from domain.ledger import ComparisonLedgerRow
@@ -35,7 +34,7 @@ def _base_request(**changes: object) -> RentPlusInvestmentRequest:
         "first_rent_adjustment_month": 13,
     }
     values.update(changes)
-    return RentPlusInvestmentRequest(**values)  # type: ignore[arg-type]
+    return cast(Callable[..., RentPlusInvestmentRequest], RentPlusInvestmentRequest)(**values)
 
 
 def _normalized(**changes: object):
@@ -217,28 +216,14 @@ def test_rent_plus_outputs_are_deterministic_context_independent_and_immutable()
         context.rounding = ROUND_DOWN
         assert calculate_rent_plus_investment(normalized) == baseline
     try:
-        baseline.monthly_postings[0].month = 2  # type: ignore[misc]
+        setattr(baseline.monthly_postings[0], "month", 2)
     except FrozenInstanceError:
         pass
     else:
         raise AssertionError("monthly postings must be immutable")
     try:
-        baseline.comparison_ledger += ()  # type: ignore[misc]
+        setattr(baseline, "comparison_ledger", ())
     except FrozenInstanceError:
         pass
     else:
         raise AssertionError("result collections must be immutable")
-
-
-def load_tests(
-    loader: unittest.TestLoader,
-    standard_tests: unittest.TestSuite,
-    pattern: str | None,
-) -> unittest.TestSuite:
-    """Expose function tests without adding test-only implementation classes."""
-    tests = [
-        value
-        for name, value in sorted(globals().items())
-        if name.startswith("test_") and inspect.isfunction(value)
-    ]
-    return unittest.TestSuite(unittest.FunctionTestCase(test) for test in tests)
