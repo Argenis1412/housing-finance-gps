@@ -7,6 +7,8 @@ from decimal import Decimal
 import json
 from typing import cast
 
+import pytest
+
 from domain.financing import replay_v1
 from domain.financing import replay_v2
 from domain.financing.replay import (
@@ -204,6 +206,13 @@ def test_replay_fails_closed_for_unknown_versions_and_invalid_evidence() -> None
 
     object.__setattr__(envelope, "sealed_outcome_jcs", "{}")
     _incompatible(envelope)
+
+
+def test_envelope_rejects_non_string_identifiers_and_evidence() -> None:
+    envelope = _envelope()
+    for field in ("contract_schema_version", "engine_version", "ruleset_version", "data_snapshot_id", "raw_request_jcs", "sealed_outcome_jcs"):
+        with pytest.raises(ValueError):
+            replace(envelope, **{field: cast(str, 1)})
 
 
 def test_raw_request_must_be_complete_canonical_and_duplicate_free() -> None:

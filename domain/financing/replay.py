@@ -6,7 +6,7 @@ from dataclasses import dataclass
 from collections.abc import Mapping
 import re
 from types import MappingProxyType
-from typing import Literal, Protocol
+from typing import Literal, Protocol, TypeGuard
 
 from domain.financing import replay_v1
 from domain.financing import replay_v2
@@ -15,6 +15,10 @@ from domain.values import DomainFailure
 
 Strategy = Literal["sac", "price"]
 _IDENTIFIER = re.compile(r"[A-Za-z0-9][A-Za-z0-9._-]*\Z")
+
+
+def _is_text(value: object) -> TypeGuard[str]:
+    return isinstance(value, str)
 
 
 @dataclass(frozen=True, slots=True)
@@ -30,14 +34,18 @@ class SimulationReplayEnvelope:
     sealed_outcome_jcs: str
 
     def __post_init__(self) -> None:
-        for value in (
+        version_values: tuple[object, ...] = (
             self.contract_schema_version,
             self.engine_version,
             self.ruleset_version,
             self.data_snapshot_id,
-        ):
-            if not _IDENTIFIER.fullmatch(value):
+        )
+        for value in version_values:
+            if not _is_text(value) or not _IDENTIFIER.fullmatch(value):
                 raise ValueError("replay version identifiers must be canonical identifiers")
+        evidence_values: tuple[object, ...] = (self.raw_request_jcs, self.sealed_outcome_jcs)
+        if not all(_is_text(value) for value in evidence_values):
+            raise ValueError("replay evidence must be canonical JSON strings")
         if self.strategy not in ("sac", "price"):
             raise ValueError("replay strategy is invalid")
 

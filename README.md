@@ -21,8 +21,8 @@ Price, a neutral 60-month comparison ledger, and rent-plus-investment. Its
 synthetic-only test suite is checked in CI.
 
 Comparison contracts beyond the neutral ledger and version envelope, API,
-frontend, persistence, dependency toolchains, consortium, eligibility rules,
-and real financial data remain unimplemented or out of scope.
+frontend, persistence, consortium, eligibility rules, and real financial data
+remain unimplemented or out of scope. Dependency review remains deferred.
 
 See [current context](docs/context/CONTEXT.md) for the exact active priority.
 
