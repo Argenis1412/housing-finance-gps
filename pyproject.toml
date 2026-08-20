@@ -11,10 +11,6 @@ dev = ["pyright", "pytest", "ruff==0.16.0"]
 include = ["domain", "tests"]
 pythonVersion = "3.13"
 typeCheckingMode = "strict"
-reportUnknownArgumentType = "none"
-reportUnknownMemberType = "none"
-reportUnknownVariableType = "none"
-reportUnnecessaryIsInstance = "none"
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

@@ -36,12 +36,10 @@ class SimulationReplayEnvelope:
             self.ruleset_version,
             self.data_snapshot_id,
         ):
-            if not isinstance(value, str) or not _IDENTIFIER.fullmatch(value):
+            if not _IDENTIFIER.fullmatch(value):
                 raise ValueError("replay version identifiers must be canonical identifiers")
         if self.strategy not in ("sac", "price"):
             raise ValueError("replay strategy is invalid")
-        if not isinstance(self.raw_request_jcs, str) or not isinstance(self.sealed_outcome_jcs, str):
-            raise ValueError("replay evidence must be canonical JSON strings")
 
 
 @dataclass(frozen=True, slots=True)

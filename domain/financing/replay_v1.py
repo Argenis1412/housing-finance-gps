@@ -12,7 +12,7 @@ from decimal import Decimal, InvalidOperation
 from fractions import Fraction
 import json
 import re
-from typing import Literal
+from typing import Literal, cast
 
 
 CONTRACT_SCHEMA_VERSION = "financing-replay-v1"
@@ -86,9 +86,12 @@ def parse_canonical_object(text: object) -> dict[str, object]:
         )
     except (TypeError, ValueError, json.JSONDecodeError) as error:
         raise ValueError("canonical JSON is invalid") from error
-    if not isinstance(value, dict) or canonical_json(value) != text:
+    if not isinstance(value, dict):
         raise ValueError("JSON is not canonical")
-    return value
+    object_value = cast(dict[str, object], value)
+    if canonical_json(object_value) != text:
+        raise ValueError("JSON is not canonical")
+    return object_value
 
 
 def evaluate(raw_request_jcs: str, strategy: Strategy) -> V1Evaluation:
@@ -377,11 +380,11 @@ def _reject_non_jcs_values(value: object) -> None:
             raise ValueError("JSON integer is outside the JCS-safe range")
         return
     if isinstance(value, list):
-        for item in value:
+        for item in cast(list[object], value):
             _reject_non_jcs_values(item)
         return
     if isinstance(value, dict):
-        for key, item in value.items():
+        for key, item in cast(dict[object, object], value).items():
             if not isinstance(key, str):
                 raise ValueError("JSON object key must be a string")
             _reject_non_jcs_values(item)

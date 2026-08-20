@@ -76,13 +76,13 @@ def test_synthetic_rent_plus_fixture_checkpoints_are_exact() -> None:
     for checkpoint in rent_plus["checkpoints"]:
         if "month" not in checkpoint:
             ledger = result.comparison_ledger[0]
-            for name, expected in checkpoint["expected"].items():
+            for name, expected in cast(dict[str, str], checkpoint["expected"]).items():
                 assert getattr(ledger, name).as_string == expected, f"month 0 {name}"
             continue
-        month = checkpoint["month"]
+        month = cast(int, checkpoint["month"])
         posting = result.monthly_postings[month - 1]
         ledger = result.comparison_ledger[month]
-        for name, expected in checkpoint["expected"].items():
+        for name, expected in cast(dict[str, str], checkpoint["expected"]).items():
             actual = getattr(posting, name) if name in {"rent", "investment_return"} else getattr(ledger, name)
             assert actual.as_string == expected, f"month {month} {name}"
 

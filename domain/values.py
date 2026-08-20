@@ -36,7 +36,7 @@ class BRLMoney:
 
     amount: Decimal
 
-    def __init__(self, raw_value: str) -> None:
+    def __init__(self, raw_value: object) -> None:
         if not isinstance(raw_value, str) or not _BRL_PATTERN.fullmatch(raw_value):
             raise ValueError("BRL money must be an exact-two-fraction decimal string")
         try:
@@ -60,7 +60,7 @@ class DeclaredRate:
     convention: str
     amount: Decimal
 
-    def __init__(self, raw_value: str, convention: str) -> None:
+    def __init__(self, raw_value: object, convention: object) -> None:
         if not isinstance(raw_value, str) or not isinstance(convention, str):
             raise ValueError("rate value and convention must be strings")
         try:
@@ -80,7 +80,7 @@ class EffectiveMonthlyRate:
 
     amount: Decimal
 
-    def __init__(self, declared_rate: DeclaredRate) -> None:
+    def __init__(self, declared_rate: object) -> None:
         if not isinstance(declared_rate, DeclaredRate):
             raise ValueError("effective monthly rate requires a declared rate")
         if declared_rate.convention != "effective_monthly":
@@ -102,7 +102,7 @@ class DomainFailure:
     code: FailureCode
     detail: str
 
-    def __init__(self, code: FailureCode, detail: str) -> None:
+    def __init__(self, code: FailureCode, detail: object) -> None:
         if code not in _FAILURE_CODES or not isinstance(detail, str):
             raise ValueError("domain failure requires a canonical code and safe detail")
         object.__setattr__(self, "code", code)

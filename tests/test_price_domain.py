@@ -104,17 +104,18 @@ def test_price_fixture_checkpoints_are_exact() -> None:
     result = calculate_price(normalized)
     for checkpoint in price["checkpoints"]:
         if "month" in checkpoint:
-            ledger = result.comparison_ledger[checkpoint["month"]]
-            for name, expected in checkpoint["expected"].items():
+            month = cast(int, checkpoint["month"])
+            ledger = result.comparison_ledger[month]
+            for name, expected in cast(dict[str, str], checkpoint["expected"]).items():
                 actual = (
-                    getattr(result.contractual_schedule[checkpoint["month"] - 1], name)
+                    getattr(result.contractual_schedule[month - 1], name)
                     if name in {"interest", "amortization", "payment"}
                     else getattr(ledger, name)
                 )
-                assert actual.as_string == expected, f"month {checkpoint['month']} {name}"
+                assert actual.as_string == expected, f"month {month} {name}"
         else:
             ledger = result.comparison_ledger[0]
-            for name, expected in checkpoint["expected"].items():
+            for name, expected in cast(dict[str, str], checkpoint["expected"]).items():
                 assert getattr(ledger, name).as_string == expected, f"month 0 {name}"
 
 
