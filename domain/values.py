@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from decimal import Decimal, InvalidOperation
-from typing import Literal
+from typing import Literal, TypeGuard
 import re
 
 
@@ -30,6 +30,14 @@ _FAILURE_CODES = frozenset(
 )
 
 
+def _is_text(value: object) -> TypeGuard[str]:
+    return isinstance(value, str)
+
+
+def _is_declared_rate(value: object) -> TypeGuard[DeclaredRate]:
+    return isinstance(value, DeclaredRate)
+
+
 @dataclass(frozen=True, slots=True, init=False)
 class BRLMoney:
     """A BRL amount created only from an exact-two-fraction contract string."""
@@ -37,7 +45,7 @@ class BRLMoney:
     amount: Decimal
 
     def __init__(self, raw_value: str) -> None:
-        if not isinstance(raw_value, str) or not _BRL_PATTERN.fullmatch(raw_value):
+        if not _is_text(raw_value) or not _BRL_PATTERN.fullmatch(raw_value):
             raise ValueError("BRL money must be an exact-two-fraction decimal string")
         try:
             amount = Decimal(raw_value)
@@ -61,7 +69,7 @@ class DeclaredRate:
     amount: Decimal
 
     def __init__(self, raw_value: str, convention: str) -> None:
-        if not isinstance(raw_value, str) or not isinstance(convention, str):
+        if not _is_text(raw_value) or not _is_text(convention):
             raise ValueError("rate value and convention must be strings")
         try:
             amount = Decimal(raw_value)
@@ -81,7 +89,7 @@ class EffectiveMonthlyRate:
     amount: Decimal
 
     def __init__(self, declared_rate: DeclaredRate) -> None:
-        if not isinstance(declared_rate, DeclaredRate):
+        if not _is_declared_rate(declared_rate):
             raise ValueError("effective monthly rate requires a declared rate")
         if declared_rate.convention != "effective_monthly":
             raise ValueError("rate convention is not effective_monthly")
@@ -103,7 +111,7 @@ class DomainFailure:
     detail: str
 
     def __init__(self, code: FailureCode, detail: str) -> None:
-        if code not in _FAILURE_CODES or not isinstance(detail, str):
+        if code not in _FAILURE_CODES or not _is_text(detail):
             raise ValueError("domain failure requires a canonical code and safe detail")
         object.__setattr__(self, "code", code)
         object.__setattr__(self, "detail", detail)

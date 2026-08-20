@@ -6,7 +6,7 @@ from dataclasses import dataclass
 from collections.abc import Mapping
 import re
 from types import MappingProxyType
-from typing import Literal
+from typing import Literal, Protocol, TypeGuard
 
 from domain.financing import replay_v1
 from domain.financing import replay_v2
@@ -15,6 +15,10 @@ from domain.values import DomainFailure
 
 Strategy = Literal["sac", "price"]
 _IDENTIFIER = re.compile(r"[A-Za-z0-9][A-Za-z0-9._-]*\Z")
+
+
+def _is_text(value: object) -> TypeGuard[str]:
+    return isinstance(value, str)
 
 
 @dataclass(frozen=True, slots=True)
@@ -30,18 +34,20 @@ class SimulationReplayEnvelope:
     sealed_outcome_jcs: str
 
     def __post_init__(self) -> None:
-        for value in (
+        version_values: tuple[object, ...] = (
             self.contract_schema_version,
             self.engine_version,
             self.ruleset_version,
             self.data_snapshot_id,
-        ):
-            if not isinstance(value, str) or not _IDENTIFIER.fullmatch(value):
+        )
+        for value in version_values:
+            if not _is_text(value) or not _IDENTIFIER.fullmatch(value):
                 raise ValueError("replay version identifiers must be canonical identifiers")
+        evidence_values: tuple[object, ...] = (self.raw_request_jcs, self.sealed_outcome_jcs)
+        if not all(_is_text(value) for value in evidence_values):
+            raise ValueError("replay evidence must be canonical JSON strings")
         if self.strategy not in ("sac", "price"):
             raise ValueError("replay strategy is invalid")
-        if not isinstance(self.raw_request_jcs, str) or not isinstance(self.sealed_outcome_jcs, str):
-            raise ValueError("replay evidence must be canonical JSON strings")
 
 
 @dataclass(frozen=True, slots=True)
@@ -49,6 +55,14 @@ class ReplayVerification:
     """Evidence that an envelope was reexecuted and matched exactly."""
 
     envelope: SimulationReplayEnvelope
+
+
+class _ReplayHandler(Protocol):
+    def parse_canonical_object(self, text: object) -> dict[str, object]: ...
+
+    def validate_outcome(self, outcome_jcs: object) -> None: ...
+
+    def evaluate(self, raw_request_jcs: str, strategy: Strategy) -> replay_v1.V1Evaluation | str: ...
 
 
 def create_v1_envelope(*, strategy: Strategy, raw_request_jcs: str, data_snapshot_id: str) -> SimulationReplayEnvelope:
@@ -106,13 +120,15 @@ def replay_financing(envelope: SimulationReplayEnvelope) -> ReplayVerification |
         reproduced = handler.evaluate(envelope.raw_request_jcs, envelope.strategy)
     except ValueError:
         return DomainFailure("incompatible_contract_version", "historical replay equivalence cannot be proven")
-    reproduced_outcome = reproduced.outcome_jcs if hasattr(reproduced, "outcome_jcs") else reproduced
+    reproduced_outcome = (
+        reproduced.outcome_jcs if isinstance(reproduced, replay_v1.V1Evaluation) else reproduced
+    )
     if reproduced_outcome != envelope.sealed_outcome_jcs:
         return DomainFailure("incompatible_contract_version", "historical replay equivalence cannot be proven")
     return ReplayVerification(envelope)
 
 
-_HANDLERS: Mapping[tuple[str, str, str, Strategy], object] = MappingProxyType({
+_HANDLERS: Mapping[tuple[str, str, str, Strategy], _ReplayHandler] = MappingProxyType({
     (replay_v1.CONTRACT_SCHEMA_VERSION, replay_v1.ENGINE_VERSION, replay_v1.RULESET_VERSION, "sac"): replay_v1,
     (replay_v1.CONTRACT_SCHEMA_VERSION, replay_v1.ENGINE_VERSION, replay_v1.RULESET_VERSION, "price"): replay_v1,
     (replay_v2.CONTRACT_SCHEMA_VERSION, replay_v2.ENGINE_VERSION, replay_v2.RULESET_VERSION, "sac"): replay_v2,

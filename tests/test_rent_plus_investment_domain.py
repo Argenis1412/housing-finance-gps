@@ -4,10 +4,9 @@ from __future__ import annotations
 
 from dataclasses import FrozenInstanceError
 from decimal import Decimal, ROUND_DOWN, localcontext
-import inspect
 import json
 from pathlib import Path
-import unittest
+from typing import Callable, cast
 
 from domain.financing.contracts import ComparisonLedgerRow as FinancingLedgerRow
 from domain.ledger import ComparisonLedgerRow
@@ -35,7 +34,7 @@ def _base_request(**changes: object) -> RentPlusInvestmentRequest:
         "first_rent_adjustment_month": 13,
     }
     values.update(changes)
-    return RentPlusInvestmentRequest(**values)  # type: ignore[arg-type]
+    return cast(Callable[..., RentPlusInvestmentRequest], RentPlusInvestmentRequest)(**values)
 
 
 def _normalized(**changes: object):
@@ -77,13 +76,13 @@ def test_synthetic_rent_plus_fixture_checkpoints_are_exact() -> None:
     for checkpoint in rent_plus["checkpoints"]:
         if "month" not in checkpoint:
             ledger = result.comparison_ledger[0]
-            for name, expected in checkpoint["expected"].items():
+            for name, expected in cast(dict[str, str], checkpoint["expected"]).items():
                 assert getattr(ledger, name).as_string == expected, f"month 0 {name}"
             continue
-        month = checkpoint["month"]
+        month = cast(int, checkpoint["month"])
         posting = result.monthly_postings[month - 1]
         ledger = result.comparison_ledger[month]
-        for name, expected in checkpoint["expected"].items():
+        for name, expected in cast(dict[str, str], checkpoint["expected"]).items():
             actual = getattr(posting, name) if name in {"rent", "investment_return"} else getattr(ledger, name)
             assert actual.as_string == expected, f"month {month} {name}"
 
@@ -217,28 +216,14 @@ def test_rent_plus_outputs_are_deterministic_context_independent_and_immutable()
         context.rounding = ROUND_DOWN
         assert calculate_rent_plus_investment(normalized) == baseline
     try:
-        baseline.monthly_postings[0].month = 2  # type: ignore[misc]
+        setattr(baseline.monthly_postings[0], "month", 2)
     except FrozenInstanceError:
         pass
     else:
         raise AssertionError("monthly postings must be immutable")
     try:
-        baseline.comparison_ledger += ()  # type: ignore[misc]
+        setattr(baseline, "comparison_ledger", ())
     except FrozenInstanceError:
         pass
     else:
         raise AssertionError("result collections must be immutable")
-
-
-def load_tests(
-    loader: unittest.TestLoader,
-    standard_tests: unittest.TestSuite,
-    pattern: str | None,
-) -> unittest.TestSuite:
-    """Expose function tests without adding test-only implementation classes."""
-    tests = [
-        value
-        for name, value in sorted(globals().items())
-        if name.startswith("test_") and inspect.isfunction(value)
-    ]
-    return unittest.TestSuite(unittest.FunctionTestCase(test) for test in tests)

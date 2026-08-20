@@ -18,8 +18,9 @@
   PR #26 / Issue #25 delivered the retained v1 financing replay evaluator,
   which emits and reexecutes sealed,
   versioned SAC and Price envelopes without live financing or ledger
-  dependencies. No API, frontend, persistence, or dependency manifest is
-  configured. Minimal Ruff and GitHub Actions validation are configured.
+  dependencies. No API, frontend, or persistence is configured. A locked
+  Python 3.13 development manifest, strict Pyright, pytest, Ruff, and GitHub
+  Actions validation are configured.
 - **Repository state:** Git is available. Work follows the issue-first,
   issue-numbered-branch, draft-pull-request workflow in the development
   process.
@@ -28,12 +29,11 @@
   verifiable financing-replay admission are documented in ADRs. A synthetic
   regression reference and a selected, partially configured QA baseline complete
   Milestone 0 documentation.
-- **Current priority:** Fixed monthly financing-fee admission is implemented
-  on the Issue #31 Track C branch through explicit v2 SAC and Price entry
-  points and a version-selected replay codec. v1 live behavior and retained
-  positive-fee rejection remain unchanged; insurance and nonzero indexation
-  remain deferred. Any financial or architecture-critical work remains Track
-  C approval-gated.
+- **Current priority:** Issue #34 adds deterministic domain property tests and
+  a branch-coverage gate after the locked Python toolchain delivered by Issue
+  #33. It must not change financial behavior, rules, replay contracts, public
+  APIs, or persistence. Insurance and nonzero indexation remain deferred; any
+  financial or architecture-critical work remains Track C approval-gated.
 
 ## Approved direction
 
@@ -76,8 +76,8 @@ The canonical scope and acceptance criteria are in the
 | `.project/` | Optional mechanical review-plan gate artifacts. |
 | `scripts/` | Optional workflow enforcement scripts; not application code. |
 
-The repository contains no FastAPI API, Next.js frontend, database,
-persistence, or dependency manifest. Comparison contracts
+The repository contains no FastAPI API, Next.js frontend, database, or
+persistence. Comparison contracts
 beyond the neutral common ledger and the version envelope, consortium, and
 eligibility rules remain unimplemented. Real financial and identifying data
 remain prohibited from source control.
@@ -90,9 +90,8 @@ those rules.
 
 ## QA status
 
-The financing domain has a standard-library unit-test suite: `uv run --offline
---no-project python -m unittest discover -s tests -t . -v` passes 59
-synthetic-only tests. The suite protects monetary and rate validation,
+The financing domain has a synthetic-only pytest suite: `uv run pytest -q`
+passes 59 tests. The suite protects monetary and rate validation,
 unsupported-case classification, posted-centavo SAC rounding and settlement,
 Price exact-rational installments, posted-centavo rounding and settlement,
 caller-context independence, separate schedule and ledger time domains,
@@ -104,11 +103,12 @@ equivalence, historical positive-fee failure preservation, and the v1
 financial parity for absent and zero fees, independent SAC and Price centavo
 checkpoints, and version-specific replay codecs.
 
-Ruff 0.16.0 is configured for Python 3.13 with the conservative `E4`, `E7`,
-`E9`, and `F` rule selection. GitHub Actions runs that lint command and the
-synthetic-only standard-library suite with read-only repository permissions.
-Formatting, static type checking, contract tests, frontend tests, browser
-tests, dependency manifests, and package pinning remain unconfigured.
+Ruff 0.16.0, Pyright strict checks over `domain/` and `tests/`, and pytest are
+locked through `pyproject.toml` and `uv.lock` for Python 3.13. GitHub Actions
+runs `uv sync --frozen`, lint, strict type checking, and the synthetic-only
+suite with read-only repository permissions. Formatting, contract tests,
+frontend tests, browser tests, and package/dependency review remain
+unconfigured.
 Milestone 0 selected and recorded the broader future baseline in the
 [synthetic regression reference and QA baseline](../specifications/milestone-0-synthetic-reference-and-qa.md).
 

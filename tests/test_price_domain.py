@@ -6,7 +6,7 @@ from dataclasses import FrozenInstanceError
 from decimal import Decimal, ROUND_DOWN, localcontext
 import json
 from pathlib import Path
-import unittest
+from typing import Callable, cast
 
 from domain.financing.contracts import (
     ComparisonLedgerRow,
@@ -38,7 +38,7 @@ def _base_request(**changes: object) -> PriceRequest:
         "rate_convention": "effective_monthly",
     }
     values.update(changes)
-    return PriceRequest(**values)  # type: ignore[arg-type]
+    return cast(Callable[..., PriceRequest], PriceRequest)(**values)
 
 
 def _normalized(**changes: object):
@@ -104,17 +104,18 @@ def test_price_fixture_checkpoints_are_exact() -> None:
     result = calculate_price(normalized)
     for checkpoint in price["checkpoints"]:
         if "month" in checkpoint:
-            ledger = result.comparison_ledger[checkpoint["month"]]
-            for name, expected in checkpoint["expected"].items():
+            month = cast(int, checkpoint["month"])
+            ledger = result.comparison_ledger[month]
+            for name, expected in cast(dict[str, str], checkpoint["expected"]).items():
                 actual = (
-                    getattr(result.contractual_schedule[checkpoint["month"] - 1], name)
+                    getattr(result.contractual_schedule[month - 1], name)
                     if name in {"interest", "amortization", "payment"}
                     else getattr(ledger, name)
                 )
-                assert actual.as_string == expected, f"month {checkpoint['month']} {name}"
+                assert actual.as_string == expected, f"month {month} {name}"
         else:
             ledger = result.comparison_ledger[0]
-            for name, expected in checkpoint["expected"].items():
+            for name, expected in cast(dict[str, str], checkpoint["expected"]).items():
                 assert getattr(ledger, name).as_string == expected, f"month 0 {name}"
 
 
@@ -229,13 +230,13 @@ def test_price_outputs_are_deterministic_and_immutable() -> None:
     first = calculate_price(_normalized())
     assert first == calculate_price(_normalized())
     try:
-        first.contractual_schedule[0].month = 2  # type: ignore[misc]
+        setattr(first.contractual_schedule[0], "month", 2)
     except FrozenInstanceError:
         pass
     else:
         raise AssertionError("contractual rows must be immutable")
     try:
-        first.comparison_ledger += ()  # type: ignore[misc]
+        setattr(first, "comparison_ledger", ())
     except FrozenInstanceError:
         pass
     else:
@@ -315,28 +316,3 @@ def test_v2_normalized_inputs_cannot_cross_strategy_boundaries() -> None:
         pass
     else:
         raise AssertionError("v2 normalized inputs must retain their selected strategy")
-
-
-def load_tests(
-    loader: unittest.TestLoader,
-    standard_tests: unittest.TestSuite,
-    pattern: str | None,
-) -> unittest.TestSuite:
-    """Expose function tests without adding test-only implementation classes."""
-    tests = (
-        test_strategies_share_the_neutral_request_and_normalization_boundary,
-        test_synthetic_unsupported_clause_matrix_has_sac_price_failure_parity,
-        test_price_fixture_checkpoints_are_exact,
-        test_zero_rate_regular_payment_uses_exact_half_up_posting,
-        test_nonzero_rate_regular_payment_uses_exact_half_up_posting,
-        test_price_is_independent_of_the_callers_decimal_context,
-        test_price_uses_shared_rows_and_separate_time_domains,
-        test_price_schedule_and_ledger_invariants_hold_for_every_posted_period,
-        test_price_outputs_are_deterministic_and_immutable,
-        test_price_accepts_the_same_explicit_zero_exclusions_as_sac,
-        test_price_v2_fixed_fee_is_explicit_and_does_not_change_principal_path,
-        test_price_v2_absent_and_zero_fee_preserve_financial_values,
-        test_price_v2_matches_independent_centavo_checkpoints,
-        test_v2_normalized_inputs_cannot_cross_strategy_boundaries,
-    )
-    return unittest.TestSuite(unittest.FunctionTestCase(test) for test in tests)

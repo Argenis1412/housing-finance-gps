@@ -1,0 +1,19 @@
+[project]
+name = "housing-finance-gps"
+version = "0.0.0"
+description = "Private deterministic housing-finance decision-support domain"
+requires-python = ">=3.13,<3.14"
+
+[dependency-groups]
+dev = ["pyright", "pytest", "ruff==0.16.0"]
+
+[tool.pyright]
+include = ["domain", "tests"]
+pythonVersion = "3.13"
+typeCheckingMode = "strict"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+
+[tool.uv]
+package = false

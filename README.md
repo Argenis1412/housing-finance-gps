@@ -17,12 +17,12 @@ only after the calculation engine has been validated.
 Milestone 0 documentation is ready: governance, provenance, financial
 contracts, a synthetic regression reference, and a selected QA baseline are
 recorded. The implemented deterministic domain includes SAC,
-Price, a neutral 60-month comparison ledger, and rent-plus-investment. Its 45
-synthetic-only standard-library tests pass.
+Price, a neutral 60-month comparison ledger, and rent-plus-investment. Its
+synthetic-only test suite is checked in CI.
 
 Comparison contracts beyond the neutral ledger and version envelope, API,
-frontend, persistence, dependency toolchains, consortium, eligibility rules,
-and real financial data remain unimplemented or out of scope.
+frontend, persistence, consortium, eligibility rules, and real financial data
+remain unimplemented or out of scope. Dependency review remains deferred.
 
 See [current context](docs/context/CONTEXT.md) for the exact active priority.
 
@@ -57,16 +57,28 @@ Read [AGENTS.md](AGENTS.md) before modifying the repository.
 
 ### Validation
 
-Run Ruff with the repository's pinned tool version:
+Synchronize the locked development environment:
 
 ```text
-uvx --from ruff==0.16.0 ruff check .
+uv sync --frozen
 ```
 
-Run the synthetic-only standard-library test suite:
+Run Ruff:
 
 ```text
-uv run --offline --no-project python -m unittest discover -s tests -t . -v
+uv run ruff check .
+```
+
+Run strict Python type checking:
+
+```text
+uv run pyright
+```
+
+Run the synthetic-only test suite:
+
+```text
+uv run pytest -q
 ```
 
 ## Privacy and limitations

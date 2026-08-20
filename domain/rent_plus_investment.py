@@ -257,8 +257,10 @@ def _normalize_rate(
     expected_convention: str,
     name: str,
 ) -> Decimal | DomainFailure:
+    if not isinstance(raw_value, str) or not isinstance(convention, str):
+        return _invalid(f"{name} rate value and convention must be finite decimal and string values")
     try:
-        declared_rate = DeclaredRate(raw_value, convention)  # type: ignore[arg-type]
+        declared_rate = DeclaredRate(raw_value, convention)
     except ValueError:
         return _invalid(f"{name} rate value and convention must be finite decimal and string values")
     if declared_rate.convention != expected_convention:

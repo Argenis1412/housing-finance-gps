@@ -10,7 +10,7 @@ from domain.ledger import (
     COMPARISON_MONTHS as _COMPARISON_MONTHS,
     ComparisonLedgerRow,
     comparison_ledger_row,
-    money,
+    money as money,
     normalize_brl_money,
     post_decimal,
 )
@@ -203,8 +203,10 @@ def _normalize_money(name: str, raw_value: object) -> BRLMoney | DomainFailure:
 
 
 def _normalize_rate(raw_value: object, convention: object) -> EffectiveMonthlyRate | DomainFailure:
+    if not isinstance(raw_value, str) or not isinstance(convention, str):
+        return _invalid("rate value and convention must be finite decimal and string values")
     try:
-        declared_rate = DeclaredRate(raw_value, convention)  # type: ignore[arg-type]
+        declared_rate = DeclaredRate(raw_value, convention)
     except ValueError:
         return _invalid("rate value and convention must be finite decimal and string values")
 
