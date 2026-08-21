@@ -87,7 +87,7 @@ def _request(**changes: object) -> dict[str, object]:
 
 
 def _raw_request(**changes: object) -> str:
-    return replay_v1.canonical_json(_request(**changes))
+    return replay_v3.canonical_json(_request(**changes))
 
 
 def _envelope(strategy: Strategy = "sac", **changes: object) -> SimulationReplayEnvelope:
@@ -115,25 +115,34 @@ def _hash(envelope: SimulationReplayEnvelope) -> str:
     return hashlib.sha256(canonical.encode()).hexdigest()
 
 
-def _cents(value: object) -> int:
-    text = cast(str, value)
-    sign = -1 if text.startswith("-") else 1
-    whole, fraction = text.removeprefix("-").split(".")
-    return sign * (int(whole) * 100 + int(fraction))
-
-
 def _require(condition: bool, detail: str) -> None:
     if not condition:
         raise AssertionError(detail)
 
 
-def _assert_trace_identities(outcome: dict[str, object]) -> None:
-    _require(outcome["kind"] == "success", "outcome must succeed")
+def _cents(value: object) -> int:
+    _require(isinstance(value, str), "centavo amount must be a string")
+    text = cast(str, value)
+    whole, fraction = text.removeprefix("-").split(".")
+    _require(
+        len(fraction) == 2 and fraction.isdigit(),
+        "centavo amount must have an exact two-digit fraction",
+    )
+    sign = -1 if text.startswith("-") else 1
+    return sign * (int(whole) * 100 + int(fraction))
+
+
+def _detail(detail: str, case: str) -> str:
+    return f"{detail}: {case}" if case else detail
+
+
+def _assert_trace_identities(outcome: dict[str, object], case: str = "") -> None:
+    _require(outcome["kind"] == "success", _detail("outcome must succeed", case))
     trace = cast(dict[str, list[dict[str, object]]], outcome["trace"])
     schedule = trace["contractual_schedule"]
     ledger = trace["comparison_ledger"]
     previous_closing: int | None = None
-    for row in schedule:
+    for position, row in enumerate(schedule, start=1):
         opening = _cents(row["opening_principal_balance"])
         interest = _cents(row["interest"])
         amortization = _cents(row["amortization"])
@@ -141,18 +150,29 @@ def _assert_trace_identities(outcome: dict[str, object]) -> None:
         payment = _cents(row["payment"])
         closing = _cents(row["closing_principal_balance"])
         if previous_closing is not None:
-            _require(opening == previous_closing, "schedule balances must be continuous")
+            _require(
+                opening == previous_closing,
+                _detail("schedule balances must be continuous", case),
+            )
         _require(
             opening >= 0
+            and interest >= 0
             and amortization >= 0
             and fee >= 0
             and closing >= 0
             and payment == interest + amortization + fee
             and closing == opening - amortization,
-            "schedule identity is invalid",
+            _detail("schedule identity is invalid", case),
         )
+        if position < len(schedule):
+            _require(
+                closing >= 1,
+                _detail("non-final schedule rows must retain at least R$0.01", case),
+            )
+        else:
+            _require(closing == 0, _detail("final schedule row must settle", case))
         previous_closing = closing
-    _require(previous_closing == 0, "schedule must settle")
+    _require(previous_closing == 0, _detail("schedule must settle", case))
 
     previous_ledger: dict[str, object] | None = None
     for row in ledger:
@@ -161,22 +181,22 @@ def _assert_trace_identities(outcome: dict[str, object]) -> None:
         cost = _cents(row["nonrecoverable_housing_cost"])
         cash = _cents(row["cash"])
         cumulative = _cents(row["cumulative_housing_cost"])
-        _require(principal >= 0, "ledger principal cannot be negative")
+        _require(principal >= 0, _detail("ledger principal cannot be negative", case))
         if 1 <= month <= len(schedule):
             posting = schedule[month - 1]
             expected_cost = _cents(posting["interest"]) + _cents(posting["fee"])
             if previous_ledger is None:
-                raise AssertionError("schedule ledger must have an opening row")
+                raise AssertionError(_detail("schedule ledger must have an opening row", case))
             _require(
                 principal == _cents(posting["closing_principal_balance"])
                 and cost == expected_cost
                 and cash == _cents(previous_ledger["cash"]) - _cents(posting["payment"]),
-                "posted schedule and ledger diverge",
+                _detail("posted schedule and ledger diverge", case),
             )
         elif previous_ledger is not None:
             _require(
                 principal == 0 and cost == 0 and cash == _cents(previous_ledger["cash"]),
-                "ledger must remain settled after the schedule",
+                _detail("ledger must remain settled after the schedule", case),
             )
         total_liabilities = _cents(row["total_liabilities"])
         _require(
@@ -191,26 +211,30 @@ def _assert_trace_identities(outcome: dict[str, object]) -> None:
                 + _cents(row["property_value"])
                 - total_liabilities
             ),
-            "ledger accounting identity is invalid",
+            _detail("ledger accounting identity is invalid", case),
         )
         expected_cumulative = cost
         if previous_ledger is not None:
             expected_cumulative += _cents(previous_ledger["cumulative_housing_cost"])
-        _require(cumulative == expected_cumulative, "cumulative cost is invalid")
+        _require(cumulative == expected_cumulative, _detail("cumulative cost is invalid", case))
         previous_ledger = row
 
 
 def test_v1_and_v2_canonical_envelopes_are_byte_stable() -> None:
     cases = {
         "v1_sac_baseline": create_v1_envelope(
-            strategy="sac", raw_request_jcs=_raw_request(), data_snapshot_id="synthetic-hash-v1-v2"
+            strategy="sac",
+            raw_request_jcs=replay_v1.canonical_json(_request()),
+            data_snapshot_id="synthetic-hash-v1-v2",
         ),
         "v1_price_baseline": create_v1_envelope(
-            strategy="price", raw_request_jcs=_raw_request(), data_snapshot_id="synthetic-hash-v1-v2"
+            strategy="price",
+            raw_request_jcs=replay_v1.canonical_json(_request()),
+            data_snapshot_id="synthetic-hash-v1-v2",
         ),
         "v1_sac_fee_failure": create_v1_envelope(
             strategy="sac",
-            raw_request_jcs=_raw_request(fee_amount="0.01"),
+            raw_request_jcs=replay_v1.canonical_json(_request(fee_amount="0.01")),
             data_snapshot_id="synthetic-hash-v1-v2",
         ),
         "v1_sac_minimal_zero": create_v1_envelope(
@@ -235,12 +259,12 @@ def test_v1_and_v2_canonical_envelopes_are_byte_stable() -> None:
         ),
         "v2_sac_baseline_fee": create_v2_envelope(
             strategy="sac",
-            raw_request_jcs=_raw_request(fee_amount="0.01"),
+            raw_request_jcs=replay_v1.canonical_json(_request(fee_amount="0.01")),
             data_snapshot_id="synthetic-hash-v1-v2",
         ),
         "v2_price_baseline_fee": create_v2_envelope(
             strategy="price",
-            raw_request_jcs=_raw_request(fee_amount="0.01"),
+            raw_request_jcs=replay_v1.canonical_json(_request(fee_amount="0.01")),
             data_snapshot_id="synthetic-hash-v1-v2",
         ),
         "v2_sac_minimal_zero": create_v2_envelope(
@@ -277,59 +301,73 @@ def test_v1_and_v2_canonical_envelopes_are_byte_stable() -> None:
     assert {name: _hash(envelope) for name, envelope in cases.items()} == _HISTORICAL_HASHES
 
 
-def test_v3_minimal_counterexamples_have_exact_centavo_safe_settlement() -> None:
+@pytest.mark.parametrize("strategy", ("sac", "price"))
+@pytest.mark.parametrize("rate", ("0.0000", "0.0001"))
+@pytest.mark.parametrize("fee", (None, "0.01"), ids=("fee-absent", "fee-0.01"))
+def test_v3_minimal_counterexamples_have_exact_centavo_safe_settlement(
+    strategy: Strategy, rate: str, fee: str | None
+) -> None:
     expected_amortization = ["0.06"] * 16 + ["0.03", "0.01"]
-    for strategy in ("sac", "price"):
-        for rate in ("0.0000", "0.0001"):
+    case = f"strategy={strategy}, principal=1.00, term=18, rate={rate}, fee={fee}"
+    outcome = _outcome(
+        strategy,
+        **{
+            **_MINIMAL_REQUEST,
+            "rate_value": rate,
+            "fee_amount": fee,
+        },
+    )
+    schedule = cast(dict[str, list[dict[str, object]]], outcome["trace"])["contractual_schedule"]
+    assert [row["interest"] for row in schedule] == ["0.00"] * 18, case
+    assert [row["amortization"] for row in schedule] == expected_amortization, case
+    assert [row["fee"] for row in schedule] == ["0.00" if fee is None else fee] * 18, case
+    expected_payment = [
+        format(Decimal(amortization) + Decimal("0.00" if fee is None else fee), ".2f")
+        for amortization in expected_amortization
+    ]
+    assert [row["payment"] for row in schedule] == expected_payment, case
+    _assert_trace_identities(outcome, case)
+    if fee is None:
+        assert outcome == _outcome(
+            strategy,
+            **{
+                **_MINIMAL_REQUEST,
+                "rate_value": rate,
+                "fee_amount": "0.00",
+            },
+        ), case
+    assert isinstance(
+        replay_financing(
+            _envelope(
+                strategy,
+                **{**_MINIMAL_REQUEST, "rate_value": rate, "fee_amount": fee},
+            )
+        ),
+        ReplayVerification,
+    ), case
+
+
+@pytest.mark.parametrize("strategy", ("sac", "price"))
+@pytest.mark.parametrize("rate", ("0.0000", "0.0001"))
+def test_v3_exhaustive_small_principals_preserve_schedule_and_ledger_invariants(
+    strategy: Strategy, rate: str
+) -> None:
+    for cents in range(1, 51):
+        principal = f"{cents // 100}.{cents % 100:02d}"
+        for term in range(1, 61):
+            common = {
+                "comparison_opening_cash": "100.00",
+                "property_price": principal,
+                "cash_down_payment": "0.00",
+                "principal": principal,
+                "term_months": term,
+                "rate_value": rate,
+            }
             for fee in (None, "0.01"):
-                outcome = _outcome(
-                    strategy,
-                    **{
-                        **_MINIMAL_REQUEST,
-                        "rate_value": rate,
-                        "fee_amount": fee,
-                    },
+                case = (
+                    f"strategy={strategy}, principal={principal}, term={term}, rate={rate}, fee={fee}"
                 )
-                schedule = cast(dict[str, list[dict[str, object]]], outcome["trace"])[
-                    "contractual_schedule"
-                ]
-                assert [row["interest"] for row in schedule] == ["0.00"] * 18
-                assert [row["amortization"] for row in schedule] == expected_amortization
-                assert [row["fee"] for row in schedule] == ["0.00" if fee is None else fee] * 18
-                expected_payment = [
-                    format(Decimal(amortization) + Decimal("0.00" if fee is None else fee), ".2f")
-                    for amortization in expected_amortization
-                ]
-                assert [row["payment"] for row in schedule] == expected_payment
-                _assert_trace_identities(outcome)
-                if fee is None:
-                    assert outcome == _outcome(
-                        strategy,
-                        **{
-                            **_MINIMAL_REQUEST,
-                            "rate_value": rate,
-                            "fee_amount": "0.00",
-                        },
-                    )
-                assert isinstance(replay_financing(_envelope(strategy, **{**_MINIMAL_REQUEST, "rate_value": rate, "fee_amount": fee})), ReplayVerification)
-
-
-def test_v3_exhaustive_small_principals_preserve_schedule_and_ledger_invariants() -> None:
-    for strategy in ("sac", "price"):
-        for cents in range(1, 51):
-            principal = f"{cents // 100}.{cents % 100:02d}"
-            for term in range(1, 61):
-                for rate in ("0.0000", "0.0001"):
-                    common = {
-                        "comparison_opening_cash": "100.00",
-                        "property_price": principal,
-                        "cash_down_payment": "0.00",
-                        "principal": principal,
-                        "term_months": term,
-                        "rate_value": rate,
-                    }
-                    _assert_trace_identities(_outcome(strategy, **common))
-                    _assert_trace_identities(_outcome(strategy, **{**common, "fee_amount": "0.01"}))
+                _assert_trace_identities(_outcome(strategy, **{**common, "fee_amount": fee}), case)
 
 
 def test_v3_live_entry_points_replay_and_preserve_ordinary_v2_values() -> None:

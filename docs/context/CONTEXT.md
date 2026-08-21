@@ -18,8 +18,10 @@
   PR #26 / Issue #25 delivered the retained v1 financing replay evaluator,
   which emits and reexecutes sealed,
   versioned SAC and Price envelopes without live financing or ledger
-  dependencies. Issue #36 adds explicit centavo-safe v3 SAC and Price
-  settlement while retaining executable v1/v2 replay evidence. No API,
+  dependencies. PR #32 / Issue #31 delivered the v2 fixed-monthly-fee replay
+  evaluator and explicit live projections, retaining v1 historical behavior.
+  Issue #36 adds explicit centavo-safe v3 SAC and Price settlement while
+  retaining executable v1/v2 replay evidence. No API,
   frontend, or persistence is configured. A locked
   Python 3.13 development manifest, strict Pyright, pytest, Ruff, and GitHub
   Actions validation are configured.
@@ -95,7 +97,7 @@ those rules.
 ## QA status
 
 The financing domain has a synthetic-only pytest suite: `uv run pytest -q`
-passes 66 tests. The suite protects monetary and rate validation,
+passes 76 tests. The suite protects monetary and rate validation,
 unsupported-case classification, posted-centavo SAC rounding and settlement,
 Price exact-rational installments, posted-centavo rounding and settlement,
 caller-context independence, separate schedule and ledger time domains,

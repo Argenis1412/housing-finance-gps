@@ -71,6 +71,21 @@ The v3 evaluator owns parsing, validation, normalization, calculation,
 canonical outcome generation, and ledger construction. It does not repair or
 transform a v1 or v2 trace.
 
+## Alternatives considered
+
+1. **Clamp only the closing balance.** Rejected because it would leave posted
+   amortization and payment inconsistent with the schedule and ledger
+   identities.
+2. **Settle early and omit remaining contractual rows.** Rejected because the
+   financing contract requires exactly `term_months` rows and the fee posts in
+   every contractual month, including the final row.
+3. **Change v1 or v2 settlement in place.** Rejected because it would alter
+   sealed historical envelopes and invalidate their executable replay
+   evidence.
+4. **Restrict the correction to positive-fee requests.** Rejected because the
+   negative balance is reachable with fee absence or an explicit zero; v3
+   must own settlement for every input it admits.
+
 ## Consequences
 
 ### Positive
