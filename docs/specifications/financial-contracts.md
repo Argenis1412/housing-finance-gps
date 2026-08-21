@@ -95,7 +95,7 @@ For each financing month, the opening balance is the prior posted closing financ
 
 1. Calculate and post interest from opening balance and effective monthly rate.
 2. Determine and post amortization.
-3. For v1, post payment as interest plus amortization. For the admitted v2
+3. For v1, post payment as interest plus amortization. For the retained v2
    fixed-fee contract, post the separate monthly fee and payment as interest
    plus amortization plus fee.
 4. Post closing principal as opening balance minus amortization.
@@ -110,12 +110,18 @@ exactly `principal / term_months`. In either Price case, the regular
 installment is rounded once to centavos with `ROUND_HALF_UP`. There is no
 intermediate Decimal-precision policy for the Price installment.
 
-For Price, each non-final month's posted amortization is the posted regular
-installment minus posted interest, and the posted closing principal is the
-opening posted principal minus that amortization. In the final month for either
-system, amortization equals the opening posted balance and payment equals final
-interest plus that balance. The final posted principal balance is exactly 0.00
-BRL.
+For retained v1 and v2, SAC posts its regular amortization and Price posts its
+regular installment minus posted interest in each non-final month. Either
+historical system can exceed the remaining posted balance for a low-centavo
+input. Their final month amortizes the opening posted balance. Those historical
+semantics remain replayable even when an intermediate balance is negative.
+
+For v3, after the selected system calculates its regular amortization in every
+non-final month, post the lesser of that amount and the remaining opening
+balance after reserving R$0.01. The final month amortizes its full opening
+balance. V3 payment is posted interest plus v3 amortization plus the fixed fee;
+the final posted principal balance is exactly R$0.00 and no v3 schedule or
+ledger principal balance is negative.
 
 ## Simplified consortium contract
 
@@ -210,11 +216,13 @@ indexation is an `unsupported_contract_clause`; explicit zero declarations
 remain accepted exclusions. Nonzero FGTS, subsidy, and tax requests remain
 `unsupported_rule`.
 
-### Versioned fixed monthly fee admission
+### Versioned fixed monthly fee and settlement availability
 
-Issue #31 admits a fixed monthly fee only through explicit v2 SAC and Price
-entry points. The existing entry points remain v1 and continue to reject a
-positive `fee_amount`; version selection is never inferred from request values.
+ADR-0008 supersedes ADR-0007 as the policy for future fixed-monthly-fee
+availability. V1 continues to reject a positive `fee_amount`; v2 remains the
+historical fixed-fee contract through its explicit v2 entry points and replay
+handler; and v3 admits the same fixed fee through explicit v3 entry points and
+its v3 replay handler. Version selection is never inferred from request values.
 
 The v2 fee is a non-negative exact-two-fraction nominal BRL amount posted in
 contractual months `1..term_months`. It is not posted in month 0 or after
@@ -229,12 +237,19 @@ Aggregate monetary values use `ROUND_HALF_UP`. Absence and
 `fee_amount="0.00"` have identical v2 financial values; v1 retains its
 historical structural output.
 
-The v2 replay contract uses `financing-replay-v2`,
+The retained v2 replay contract uses `financing-replay-v2`,
 `financing-fixed-principal-v2`, and `financing-ruleset-v1`. Replay selects a
 version-specific codec-handler before parsing request or outcome contents.
 The v2 evaluator is the single semantic authority; live v2 results are
 projections of its canonical outcome. Unknown handlers, malformed evidence,
 and mismatches fail closed as `incompatible_contract_version`.
+
+The v3 replay contract uses `financing-replay-v3`,
+`financing-centavo-safe-v3`, and `financing-ruleset-v2`. Its evaluator is the
+only authority for v3 normalization, centavo-safe settlement, and ledger
+construction. Its fee is posted in every contractual row, including the final
+row; fee absence and `fee_amount="0.00"` have identical v3 financial values.
+V1/v2 envelopes and replay behavior remain historical and byte-equivalent.
 
 Future support for correction or indexation, insurance, or any fee variant
 beyond the admitted fixed monthly fee requires the

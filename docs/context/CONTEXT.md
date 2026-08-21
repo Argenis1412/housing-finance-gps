@@ -18,7 +18,11 @@
   PR #26 / Issue #25 delivered the retained v1 financing replay evaluator,
   which emits and reexecutes sealed,
   versioned SAC and Price envelopes without live financing or ledger
-  dependencies. No API, frontend, or persistence is configured. A locked
+  dependencies. PR #32 / Issue #31 delivered the v2 fixed-monthly-fee replay
+  evaluator and explicit live projections, retaining v1 historical behavior.
+  Issue #36 adds explicit centavo-safe v3 SAC and Price settlement while
+  retaining executable v1/v2 replay evidence. No API,
+  frontend, or persistence is configured. A locked
   Python 3.13 development manifest, strict Pyright, pytest, Ruff, and GitHub
   Actions validation are configured.
 - **Repository state:** Git is available. Work follows the issue-first,
@@ -29,11 +33,11 @@
   verifiable financing-replay admission are documented in ADRs. A synthetic
   regression reference and a selected, partially configured QA baseline complete
   Milestone 0 documentation.
-- **Current priority:** Issue #34 adds deterministic domain property tests and
-  a branch-coverage gate after the locked Python toolchain delivered by Issue
-  #33. It must not change financial behavior, rules, replay contracts, public
-  APIs, or persistence. Insurance and nonzero indexation remain deferred; any
-  financial or architecture-critical work remains Track C approval-gated.
+- **Current priority:** Issue #36 defines centavo-safe v3 financing settlement
+  and version-owned fixed-fee availability. Issue #34 remains blocked and must
+  be recreated from the resulting `main` after Issue #36 merges. Insurance and
+  nonzero indexation remain deferred; any financial or architecture-critical
+  work remains Track C approval-gated.
 
 ## Approved direction
 
@@ -68,10 +72,12 @@ The canonical scope and acceptance criteria are in the
 | `domain/financing/price.py` | Pure Price schedule calculation using exact rational installment arithmetic. |
 | `domain/financing/replay_v1.py` | Self-contained historical v1 financing evaluator and complete canonical trace projection. |
 | `domain/financing/replay_v2.py` | Versioned v2 fixed-fee evaluator, codec validation, and canonical trace authority. |
+| `domain/financing/replay_v3.py` | Versioned centavo-safe evaluator, codec validation, and canonical trace authority. |
 | `domain/financing/replay.py` | Immutable neutral replay envelope, versioned emission, and fail-closed dispatcher. |
 | `domain/financing/v2.py` | Explicit v2 SAC/Price live projections over the retained v2 evaluator. |
+| `domain/financing/v3.py` | Explicit v3 SAC/Price live projections over the centavo-safe evaluator. |
 | `domain/rent_plus_investment.py` | Pure rent-plus-investment postings, feasibility boundary, and 60-month comparison ledger. |
-| `tests/` | Synthetic-only regression and boundary tests for SAC, Price, financing replay (`tests/test_financing_replay.py`), and rent-plus-investment. |
+| `tests/` | Synthetic-only regression and boundary tests for SAC, Price, financing replay, v3 centavo-safe settlement (`tests/test_financing_v3.py`), and rent-plus-investment. |
 | `.claude/` | Claude-specific adapters that defer to repository-owned rules. |
 | `.project/` | Optional mechanical review-plan gate artifacts. |
 | `scripts/` | Optional workflow enforcement scripts; not application code. |
@@ -91,7 +97,7 @@ those rules.
 ## QA status
 
 The financing domain has a synthetic-only pytest suite: `uv run pytest -q`
-passes 59 tests. The suite protects monetary and rate validation,
+passes 76 tests. The suite protects monetary and rate validation,
 unsupported-case classification, posted-centavo SAC rounding and settlement,
 Price exact-rational installments, posted-centavo rounding and settlement,
 caller-context independence, separate schedule and ledger time domains,
@@ -101,7 +107,11 @@ determinism, immutability, canonical versioned financing replay, full-trace
 equivalence, historical positive-fee failure preservation, and the v1
 600-month schedule boundary, explicit and cumulative v2 fee posting, v2
 financial parity for absent and zero fees, independent SAC and Price centavo
-checkpoints, and version-specific replay codecs.
+checkpoints, version-specific replay codecs, byte-sensitive v1/v2 envelope
+stability, explicit v3 codec and dispatch validation, v3 fee-version
+isolation, and the synthetic centavo-safe SAC/Price matrix for principals from
+one to fifty centavos, terms one to sixty, rates 0.0000 and 0.0001, and absent
+or R$0.01 fixed fees.
 
 Ruff 0.16.0, Pyright strict checks over `domain/` and `tests/`, and pytest are
 locked through `pyproject.toml` and `uv.lock` for Python 3.13. GitHub Actions

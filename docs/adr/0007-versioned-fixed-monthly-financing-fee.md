@@ -1,6 +1,6 @@
 # ADR-0007: Admit a versioned fixed monthly financing fee
 
-- **Status:** Accepted
+- **Status:** Superseded by ADR-0008
 - **Date:** 2026-08-19
 - **Owners:** Project maintainers
 - **Related work item:** Issue #31

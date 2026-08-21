@@ -42,7 +42,8 @@ Use [0000-template.md](0000-template.md). Every accepted ADR states:
 | [ADR-0004](0004-backend-authoritative-financial-contracts.md) | Accepted | Keep authoritative financial calculations in the backend contract. |
 | [ADR-0005](0005-financing-extension-admission-boundary.md) | Accepted | Require explicit, versioned admission evidence for future financing clauses. |
 | [ADR-0006](0006-versioned-financing-replay-contract.md) | Accepted | Define immutable financing replay evidence and executable historical verification. |
-| [ADR-0007](0007-versioned-fixed-monthly-financing-fee.md) | Accepted | Admit the fixed monthly financing fee through explicit v2 semantics and replay. |
+| [ADR-0007](0007-versioned-fixed-monthly-financing-fee.md) | Superseded by ADR-0008 | Historical v2 admission of the fixed monthly financing fee. |
+| [ADR-0008](0008-centavo-safe-financing-settlement.md) | Accepted | Define centavo-safe settlement and version-owned fixed-fee availability. |
 
 Do not create speculative ADRs merely to fill the initial list. Write each
 record when its decision is required for an approved work item.

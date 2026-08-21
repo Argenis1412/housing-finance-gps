@@ -25,6 +25,12 @@ from domain.financing.v2 import (
     calculate_price_v2 as _calculate_price_v2,
     normalize_price_request_v2 as _normalize_price_request_v2,
 )
+from domain.financing.v3 import (
+    FinancingV3Result,
+    NormalizedV3FinancingInput,
+    calculate_price_v3 as _calculate_price_v3,
+    normalize_price_request_v3 as _normalize_price_request_v3,
+)
 
 
 PriceRequest = FinancingRequest
@@ -61,6 +67,16 @@ def normalize_price_request_v2(request: PriceRequest) -> NormalizedV2FinancingIn
 def calculate_price_v2(input_value: NormalizedV2FinancingInput) -> FinancingV2Result:
     """Project the retained Price v2 evaluator output."""
     return _calculate_price_v2(input_value)
+
+
+def normalize_price_request_v3(request: PriceRequest) -> NormalizedV3FinancingInput | DomainFailure:
+    """Select Price v3 explicitly before normalization."""
+    return _normalize_price_request_v3(request)
+
+
+def calculate_price_v3(input_value: NormalizedV3FinancingInput) -> FinancingV3Result:
+    """Project the centavo-safe Price v3 evaluator output."""
+    return _calculate_price_v3(input_value)
 
 
 def _build_contractual_schedule(input_value: NormalizedPriceInput) -> tuple[PriceContractualRow, ...]:
