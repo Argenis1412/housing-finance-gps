@@ -23,6 +23,12 @@ from domain.financing.v2 import (
     calculate_sac_v2 as _calculate_sac_v2,
     normalize_sac_request_v2 as _normalize_sac_request_v2,
 )
+from domain.financing.v3 import (
+    FinancingV3Result,
+    NormalizedV3FinancingInput,
+    calculate_sac_v3 as _calculate_sac_v3,
+    normalize_sac_request_v3 as _normalize_sac_request_v3,
+)
 
 
 SACRequest = FinancingRequest
@@ -59,6 +65,16 @@ def normalize_sac_request_v2(request: SACRequest) -> NormalizedV2FinancingInput 
 def calculate_sac_v2(input_value: NormalizedV2FinancingInput) -> FinancingV2Result:
     """Project the retained SAC v2 evaluator output."""
     return _calculate_sac_v2(input_value)
+
+
+def normalize_sac_request_v3(request: SACRequest) -> NormalizedV3FinancingInput | DomainFailure:
+    """Select SAC v3 explicitly before normalization."""
+    return _normalize_sac_request_v3(request)
+
+
+def calculate_sac_v3(input_value: NormalizedV3FinancingInput) -> FinancingV3Result:
+    """Project the centavo-safe SAC v3 evaluator output."""
+    return _calculate_sac_v3(input_value)
 
 
 def _build_contractual_schedule(input_value: NormalizedSACInput) -> tuple[SACContractualRow, ...]:

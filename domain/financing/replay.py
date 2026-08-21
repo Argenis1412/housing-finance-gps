@@ -10,6 +10,7 @@ from typing import Literal, Protocol, TypeGuard
 
 from domain.financing import replay_v1
 from domain.financing import replay_v2
+from domain.financing import replay_v3
 from domain.values import DomainFailure
 
 
@@ -101,6 +102,24 @@ def create_v2_envelope(*, strategy: Strategy, raw_request_jcs: str, data_snapsho
     )
 
 
+def create_v3_envelope(*, strategy: Strategy, raw_request_jcs: str, data_snapshot_id: str) -> SimulationReplayEnvelope:
+    """Emit a v3 envelope through the centavo-safe semantic authority."""
+    if strategy not in ("sac", "price"):
+        raise ValueError("replay strategy is invalid")
+    replay_v3.parse_canonical_object(raw_request_jcs)
+    outcome = replay_v3.evaluate(raw_request_jcs, strategy)
+    replay_v3.validate_outcome(outcome)
+    return SimulationReplayEnvelope(
+        contract_schema_version=replay_v3.CONTRACT_SCHEMA_VERSION,
+        strategy=strategy,
+        raw_request_jcs=raw_request_jcs,
+        engine_version=replay_v3.ENGINE_VERSION,
+        ruleset_version=replay_v3.RULESET_VERSION,
+        data_snapshot_id=data_snapshot_id,
+        sealed_outcome_jcs=outcome,
+    )
+
+
 def replay_financing(envelope: SimulationReplayEnvelope) -> ReplayVerification | DomainFailure:
     """Reexecute an envelope or fail closed when equivalence is unprovable."""
     try:
@@ -133,4 +152,6 @@ _HANDLERS: Mapping[tuple[str, str, str, Strategy], _ReplayHandler] = MappingProx
     (replay_v1.CONTRACT_SCHEMA_VERSION, replay_v1.ENGINE_VERSION, replay_v1.RULESET_VERSION, "price"): replay_v1,
     (replay_v2.CONTRACT_SCHEMA_VERSION, replay_v2.ENGINE_VERSION, replay_v2.RULESET_VERSION, "sac"): replay_v2,
     (replay_v2.CONTRACT_SCHEMA_VERSION, replay_v2.ENGINE_VERSION, replay_v2.RULESET_VERSION, "price"): replay_v2,
+    (replay_v3.CONTRACT_SCHEMA_VERSION, replay_v3.ENGINE_VERSION, replay_v3.RULESET_VERSION, "sac"): replay_v3,
+    (replay_v3.CONTRACT_SCHEMA_VERSION, replay_v3.ENGINE_VERSION, replay_v3.RULESET_VERSION, "price"): replay_v3,
 })
