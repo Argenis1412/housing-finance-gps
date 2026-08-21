@@ -367,7 +367,12 @@ def test_v3_exhaustive_small_principals_preserve_schedule_and_ledger_invariants(
                 case = (
                     f"strategy={strategy}, principal={principal}, term={term}, rate={rate}, fee={fee}"
                 )
-                _assert_trace_identities(_outcome(strategy, **{**common, "fee_amount": fee}), case)
+                outcome = _outcome(strategy, **{**common, "fee_amount": fee})
+                schedule = cast(dict[str, list[dict[str, object]]], outcome["trace"])[
+                    "contractual_schedule"
+                ]
+                assert len(schedule) == term, case
+                _assert_trace_identities(outcome, case)
 
 
 def test_v3_live_entry_points_replay_and_preserve_ordinary_v2_values() -> None:
