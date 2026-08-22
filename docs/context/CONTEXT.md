@@ -88,11 +88,12 @@ The canonical scope and acceptance criteria are in the
 | `.project/` | Optional mechanical review-plan gate artifacts. |
 | `scripts/` | Optional workflow enforcement scripts; not application code. |
 
-The repository contains a bounded FastAPI v1 calculation-projection API but
-no simulation-creation, persistence, replay, Next.js frontend, database, or
-comparison contract beyond the neutral common ledger and version envelope.
-Consortium and eligibility rules remain unimplemented. Real financial and
-identifying data remain prohibited from source control.
+The repository contains a bounded FastAPI v1 calculation-projection API. The
+API does not expose replay, while the retained v1, v2, and v3 replay evaluators
+remain part of the domain. There is no simulation-creation, persistence, Next.js
+frontend, database, or comparison contract beyond the neutral common ledger and
+version envelope. Consortium and eligibility rules remain unimplemented. Real
+financial and identifying data remain prohibited from source control.
 
 ## Active architecture invariants
 

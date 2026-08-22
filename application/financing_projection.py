@@ -69,9 +69,11 @@ def calculate_v3_financing_projection(
         if isinstance(normalized, DomainFailure):
             return ApplicationFailure(code=normalized.code)
         result = calculate_sac_v3(normalized)
-    else:
+    elif strategy == "price":
         normalized = normalize_price_request_v3(request)
         if isinstance(normalized, DomainFailure):
             return ApplicationFailure(code=normalized.code)
         result = calculate_price_v3(normalized)
+    else:
+        return ApplicationFailure(code="invalid_input")
     return result
