@@ -1,6 +1,6 @@
 # Housing Finance GPS — Current Context
 
-> Last updated: August 19, 2026
+> Last updated: August 22, 2026
 > Read [AGENTS.md](../../AGENTS.md) before this document. This file describes
 > current repository reality, not future intent and not implementation history.
 
@@ -21,7 +21,9 @@
   dependencies. PR #32 / Issue #31 delivered the v2 fixed-monthly-fee replay
   evaluator and explicit live projections, retaining v1 historical behavior.
   Issue #36 adds explicit centavo-safe v3 SAC and Price settlement while
-  retaining executable v1/v2 replay evidence. No API,
+  retaining executable v1/v2 replay evidence. Issue #34 adds deterministic
+  Hypothesis domain properties and a branch-coverage gate without changing
+  domain behavior, contracts, or versions. No API,
   frontend, or persistence is configured. A locked
   Python 3.13 development manifest, strict Pyright, pytest, Ruff, and GitHub
   Actions validation are configured.
@@ -33,9 +35,8 @@
   verifiable financing-replay admission are documented in ADRs. A synthetic
   regression reference and a selected, partially configured QA baseline complete
   Milestone 0 documentation.
-- **Current priority:** Issue #36 defines centavo-safe v3 financing settlement
-  and version-owned fixed-fee availability. Issue #34 remains blocked and must
-  be recreated from the resulting `main` after Issue #36 merges. Insurance and
+- **Current priority:** Close Issue #34's Track B domain-assurance gate. Only
+  after Issue #34 closes, evaluate the minimum FastAPI boundary. Insurance and
   nonzero indexation remain deferred; any financial or architecture-critical
   work remains Track C approval-gated.
 
@@ -113,10 +114,19 @@ isolation, and the synthetic centavo-safe SAC/Price matrix for principals from
 one to fifty centavos, terms one to sixty, rates 0.0000 and 0.0001, and absent
 or R$0.01 fixed fees.
 
-Ruff 0.16.0, Pyright strict checks over `domain/` and `tests/`, and pytest are
-locked through `pyproject.toml` and `uv.lock` for Python 3.13. GitHub Actions
-runs `uv sync --frozen`, lint, strict type checking, and the synthetic-only
-suite with read-only repository permissions. Formatting, contract tests,
+Ruff 0.16.0, Pyright strict checks over `domain/` and `tests/`, pytest,
+Hypothesis, and Coverage.py are locked through `pyproject.toml` and `uv.lock`
+for Python 3.13. Domain properties run deterministically with no example
+database or deadline and 24 examples per property. A local targeted run
+excluding the exhaustive v3 matrix reported 115 passed tests; the historical
+76-test count is not the current suite total. GitHub Actions runs the complete
+pytest suite once under branch instrumentation over `domain/`, followed by a
+95% total Coverage.py gate. The delivered 97% figure is an observed local
+measurement: the initial full instrumented run consumed approximately 21m 13s
+CPU (about 2h 32m wall-clock time in the observed desktop session), and
+targeted coverage data was appended afterward without repeating the v3 matrix.
+The latest successful CI run completed in 8m 38s with a 15-minute job timeout.
+Formatting, contract tests,
 frontend tests, browser tests, and package/dependency review remain
 unconfigured.
 Milestone 0 selected and recorded the broader future baseline in the
