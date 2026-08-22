@@ -3,18 +3,23 @@ name = "housing-finance-gps"
 version = "0.0.0"
 description = "Private deterministic housing-finance decision-support domain"
 requires-python = ">=3.13,<3.14"
+dependencies = [
+    "fastapi>=0.115,<1",
+]
 
 [dependency-groups]
 dev = [
     "coverage>=7.15.4",
     "hypothesis>=6.165.10",
+    "httpx>=0.27,<1",
+    "openapi-spec-validator>=0.7,<1",
     "pyright",
     "pytest",
     "ruff==0.16.0",
 ]
 
 [tool.pyright]
-include = ["domain", "tests"]
+include = ["domain", "application", "api", "tests"]
 pythonVersion = "3.13"
 typeCheckingMode = "strict"
 
