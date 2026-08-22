@@ -427,7 +427,7 @@ Money is represented with `Decimal` or integer minor units. Binary floating-poin
 
 ### 9.3 Versioning and reproducibility
 
-Every simulation stores three independent identifiers:
+Every `simulation_result` stores three independent identifiers:
 
 - `engine_version`: semantic version of the calculation behavior;
 - `ruleset_version`: version of the supported FGTS, MCMV, and other decision rules;
@@ -444,6 +444,14 @@ It also stores:
 - output and comparison trace.
 
 A new engine version never rewrites a historical result. A user may recalculate a copied simulation with current versions and compare the two runs.
+
+A `calculation_projection` is an ephemeral, versioned calculation response. It
+is not a `simulation_result`: it is not persisted, exported, replayable,
+attested, comparable, or presented as a decision result, and it does not carry
+`data_snapshot_id`, a canonical request, or a sealed outcome. A projection
+becomes a `simulation_result` only through a future explicit simulation-
+creation boundary that binds the full version tuple, canonical request, and
+sealed outcome. No projection is converted implicitly.
 
 Changes that alter results require regression cases, a changelog entry, and a semantic-versioning decision. A change in an external value is a new data snapshot and is not automatically a new engine version.
 
@@ -578,6 +586,8 @@ Every number in generated text must be traceable to a permitted field in the eng
 ## 14. API and contract principles
 
 - the API is versioned from its first public frontend integration;
+- calculation projections and simulation results are distinct contracts; only
+  simulation results carry complete provenance and replay evidence;
 - request and response models reject ambiguous units and rate conventions;
 - API errors use stable machine-readable codes and safe user-facing messages;
 - the frontend generates or validates TypeScript types from the OpenAPI contract;
@@ -695,7 +705,7 @@ The MVP is accepted only when all of the following are true:
 6. Mandatory liquidity and payment constraints exclude infeasible alternatives before comparison.
 7. The result shows cost, debt, liquidity, financial assets, estimated home equity, and estimated net worth on a consistent timeline.
 8. At least one dominant variable or explicit “no boundary in tested range” result is shown for each relevant pairwise comparison.
-9. Every result contains `engine_version`, `ruleset_version`, and `data_snapshot_id`.
+9. Every simulation result contains `engine_version`, `ruleset_version`, and `data_snapshot_id`.
 10. Exported JSON can reproduce the same normalized result with the same versions.
 11. Unsupported FGTS, MCMV, consortium, or contractual conditions fail visibly and safely.
 12. No authoritative financial calculation exists in the frontend.

@@ -23,8 +23,10 @@
   Issue #36 adds explicit centavo-safe v3 SAC and Price settlement while
   retaining executable v1/v2 replay evidence. Issue #34 adds deterministic
   Hypothesis domain properties and a branch-coverage gate without changing
-  domain behavior, contracts, or versions. No API,
-  frontend, or persistence is configured. A locked
+  domain behavior, contracts, or versions. Issue #39 adds one bounded,
+  ephemeral FastAPI v1 financing-calculation projection over explicit v3 SAC
+  and Price behavior; it does not add simulation creation, persistence,
+  replay, or a frontend. A locked
   Python 3.13 development manifest, strict Pyright, pytest, Ruff, and GitHub
   Actions validation are configured.
 - **Repository state:** Git is available. Work follows the issue-first,
@@ -35,10 +37,11 @@
   verifiable financing-replay admission are documented in ADRs. A synthetic
   regression reference and a selected, partially configured QA baseline complete
   Milestone 0 documentation.
-- **Current priority:** Close Issue #34's Track B domain-assurance gate. Only
-  after Issue #34 closes, evaluate the minimum FastAPI boundary. Insurance and
-  nonzero indexation remain deferred; any financial or architecture-critical
-  work remains Track C approval-gated.
+- **Current priority:** Deliver Issue #39's Track C bounded FastAPI v1
+  financing-calculation projection. The 95% total Coverage.py gate with branch
+  instrumentation over `domain/` remains required. Insurance and nonzero
+  indexation remain deferred; any financial or architecture-critical work
+  remains Track C approval-gated.
 
 ## Approved direction
 
@@ -66,6 +69,8 @@ The canonical scope and acceptance criteria are in the
 | `docs/process/` | Development, review, approval, and QA workflow. |
 | `docs/context/` | Current state, history, open questions, and discoveries. |
 | `docs/adr/` | ADR guidance and future accepted architecture decisions. |
+| `application/financing_projection.py` | Framework-independent use case selecting the fixed v3 financing projection. |
+| `api/` | FastAPI v1 projection schemas, HTTP resource limits, public error mapping, and route. |
 | `domain/values.py` | Immutable BRL money and rate values plus canonical runtime failures for the financing domain. |
 | `domain/ledger.py` | Neutral common comparison ledger, derived accounting identities, and exact rational monetary posting. |
 | `domain/financing/contracts.py` | Shared financing request, normalization, canonical failures, and immutable contractual schedule rows. |
@@ -83,11 +88,12 @@ The canonical scope and acceptance criteria are in the
 | `.project/` | Optional mechanical review-plan gate artifacts. |
 | `scripts/` | Optional workflow enforcement scripts; not application code. |
 
-The repository contains no FastAPI API, Next.js frontend, database, or
-persistence. Comparison contracts
-beyond the neutral common ledger and the version envelope, consortium, and
-eligibility rules remain unimplemented. Real financial and identifying data
-remain prohibited from source control.
+The repository contains a bounded FastAPI v1 calculation-projection API. The
+API does not expose replay, while the retained v1, v2, and v3 replay evaluators
+remain part of the domain. There is no simulation-creation, persistence, Next.js
+frontend, database, or comparison contract beyond the neutral common ledger and
+version envelope. Consortium and eligibility rules remain unimplemented. Real
+financial and identifying data remain prohibited from source control.
 
 ## Active architecture invariants
 
