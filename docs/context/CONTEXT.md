@@ -23,7 +23,7 @@
   Issue #36 adds explicit centavo-safe v3 SAC and Price settlement while
   retaining executable v1/v2 replay evidence. Issue #34 adds deterministic
   Hypothesis domain properties and a branch-coverage gate without changing
-  domain behavior, contracts, or versions. Issue #39 adds one bounded,
+  domain behavior, contracts, or versions. PR #40 / Issue #39 delivered one bounded,
   ephemeral FastAPI v1 financing-calculation projection over explicit v3 SAC
   and Price behavior; it does not add simulation creation, persistence,
   replay, or a frontend. A locked
@@ -37,8 +37,8 @@
   verifiable financing-replay admission are documented in ADRs. A synthetic
   regression reference and a selected, partially configured QA baseline complete
   Milestone 0 documentation.
-- **Current priority:** Deliver Issue #39's Track C bounded FastAPI v1
-  financing-calculation projection. The 95% total Coverage.py gate with branch
+- **Current priority:** Define the Track C contract for the simplified consortium
+  domain before implementation. The 95% total Coverage.py gate with branch
   instrumentation over `domain/` remains required. Insurance and nonzero
   indexation remain deferred; any financial or architecture-critical work
   remains Track C approval-gated.

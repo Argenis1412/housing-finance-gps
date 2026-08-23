@@ -23,6 +23,7 @@ out/
 # Local databases and generated artifacts
 *.sqlite3
 *.db
+.coverage
 coverage/
 dist/
 build/
