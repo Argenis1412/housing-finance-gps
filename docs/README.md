@@ -34,3 +34,6 @@ short summary plus a link.
 - [Reference-case governance and provenance](specifications/reference-case-governance.md)
 - [Milestone 0 financial contracts](specifications/financial-contracts.md)
 - [Synthetic regression reference and QA baseline](specifications/milestone-0-synthetic-reference-and-qa.md)
+- [Minimum synthetic comparison](specifications/minimum-comparison-v1.md)
+- [Common monthly resources](specifications/common-monthly-resources-v1.md)
+- [Local comparison application, API and UI](specifications/comparison-application-api-ui-v1.md)

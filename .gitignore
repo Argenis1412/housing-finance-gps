@@ -14,6 +14,7 @@ venv/
 node_modules/
 .next/
 out/
+web/next-env.d.ts
 
 # Local environment files
 .env
@@ -27,3 +28,6 @@ out/
 coverage/
 dist/
 build/
+*.tsbuildinfo
+web/test-results/
+web/playwright-report/

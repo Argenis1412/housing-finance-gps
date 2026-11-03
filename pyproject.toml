@@ -16,6 +16,7 @@ dev = [
     "pyright",
     "pytest",
     "ruff==0.16.0",
+    "uvicorn>=0.38,<1",
 ]
 
 [tool.pyright]

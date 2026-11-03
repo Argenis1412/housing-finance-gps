@@ -1,0 +1,79 @@
+import {test, expect} from "@playwright/test";
+
+test("complete explicit flow, exclusions, failure recovery and stale-response protection", async ({page}, info) => {
+  await page.goto("/");
+  const values: Record<string, string> = {opening: "200,00", property: "60,00", rent: "1,00", adjustment: "0", firstAdjustment: "13", minimum: "0,00", maximum: "200,00", principal: "60,00", down: "0,00", financeTerm: "60", financeRate: "0", fee: "0,00", invested: "0,00", contribution: "0,00", return: "0", letter: "60,00", consortiumTerm: "60", contemplation: "1", topup: "0,00"};
+  for (const [name, value] of Object.entries(values)) await page.locator(`input[name="${name}"]`).fill(value);
+  await page.getByLabel("Rótulo do cenário de contemplação").selectOption("early");
+  await page.getByLabel("Identificação do componente", {exact: true}).fill("synthetic-income");
+  await page.getByLabel("Valor do componente", {exact: true}).fill("3,00");
+  await page.getByLabel("Referência da fonte", {exact: true}).fill("synthetic-source");
+  await page.getByLabel("Data da fonte em UTC", {exact: true}).fill("2026-11-03T12:00:00Z");
+  await page.getByLabel("Classificação", {exact: true}).selectOption("projected_assumption");
+  await page.getByLabel("Referência da premissa", {exact: true}).fill("synthetic-plan");
+  await page.getByRole("button", {name: "Revisar aplicação do componente"}).click();
+  await expect(page.getByText("0 de 60 declarados", {exact: true})).toBeVisible();
+  await page.getByRole("button", {name: "Confirmar declarações do perfil"}).click();
+  await page.getByLabel("Tipo de fluxo").selectOption("external_expenses");
+  // The existing identity cannot change sides, even on a different month.
+  await page.getByRole("button", {name: "Revisar aplicação do componente"}).click();
+  await expect(page.getByRole("alert", {name: "Erro do perfil"})).toContainText("outro lado");
+  await page.getByLabel("Identificação do componente", {exact: true}).fill("synthetic-expense");
+  await page.getByLabel("Valor do componente", {exact: true}).fill("1,00");
+  await page.getByRole("button", {name: "Revisar aplicação do componente"}).click();
+  await page.getByRole("button", {name: "Confirmar declarações do perfil"}).click();
+  await expect(page.getByText("60 de 60 declarados", {exact: true})).toBeVisible();
+  for (const label of ["Crédito", "Administração", "Fundo de reserva", "Seguro"]) await page.getByLabel(`${label} por mês`, {exact: true}).fill(label === "Crédito" ? "1,00" : "0,00");
+  await page.getByLabel("Até o mês do cronograma", {exact: true}).fill("60");
+  await page.getByRole("button", {name: "Revisar cópia do cronograma", exact: true}).click();
+  await page.getByRole("button", {name: "Confirmar cópia do cronograma", exact: true}).click();
+  await page.getByLabel("Valor de espera a repetir").fill("1,00");
+  await page.getByRole("button", {name: "Revisar cópia dos custos de espera"}).click();
+  await page.getByRole("button", {name: "Confirmar cópia do cronograma", exact: true}).click();
+  await page.getByRole("checkbox").nth(0).check(); await page.getByRole("checkbox").nth(1).check();
+  await page.getByRole("button", {name: "Revisar declarações", exact: true}).click();
+  await expect(page.getByRole("heading", {name: "Revise o que você declarou"})).toBeVisible();
+  const response = page.waitForResponse(r => r.url().endsWith("/api/v1/comparison/simulations") && r.request().method() === "POST");
+  await page.getByRole("button", {name: "Confirmar revisão e comparar"}).click();
+  expect((await response).status()).toBe(200);
+  await expect(page.getByRole("heading", {name: "Empate no primeiro grupo: SAC e Price"})).toBeVisible();
+  await expect(page.getByText("Somente aluguel investe e recebe rendimentos.", {exact: false}).first()).toBeVisible();
+  await page.screenshot({path: info.outputPath("result.png"), fullPage: true});
+  await page.screenshot({path: info.outputPath("preview.png")});
+
+  await page.getByRole("button", {name: "Editar dados e revisar novamente"}).click();
+  await page.locator('input[name="maximum"]').fill("0,00");
+  await page.getByRole("button", {name: "Revisar declarações", exact: true}).click();
+  await page.getByRole("button", {name: "Confirmar revisão e comparar"}).click();
+  await expect(page.getByRole("heading", {name: "Nenhuma alternativa elegível neste cenário"})).toBeVisible();
+
+  await page.getByRole("button", {name: "Editar dados e revisar novamente"}).click();
+  await page.locator('input[name="maximum"]').fill("200,00");
+  await page.locator('input[name="principal"]').fill("59,00");
+  await page.getByRole("button", {name: "Revisar declarações", exact: true}).click();
+  await page.getByRole("button", {name: "Confirmar revisão e comparar"}).click();
+  await expect(page.getByRole("heading", {name: "Maior patrimônio entre as elegíveis: Consórcio"})).toBeVisible();
+  await expect(page.getByRole("heading", {name: "SAC: Excluída: entrada ou regra não suportada", exact: true})).toBeVisible();
+
+  await page.getByRole("button", {name: "Editar dados e revisar novamente"}).click();
+  await page.getByRole("button", {name: "Revisar declarações", exact: true}).click();
+  await page.route("**/api/v1/comparison/simulations", route => route.fulfill({status: 500, json: {api_version: "v1", code: "internal_error", message_pt_br: "safe"}}));
+  await page.getByRole("button", {name: "Confirmar revisão e comparar"}).click();
+  await expect(page.getByRole("alert", {name: "Falha na comparação"})).toContainText("Não foi possível processar");
+  await page.unroute("**/api/v1/comparison/simulations");
+  await page.getByRole("button", {name: "Tentar comparação novamente"}).click();
+  await expect(page.getByRole("heading", {name: "Quatro caminhos, as mesmas origens"})).toBeVisible();
+
+  await page.getByRole("button", {name: "Editar dados e revisar novamente"}).click();
+  await page.getByRole("button", {name: "Revisar declarações", exact: true}).click();
+  let release!: () => void;
+  const delayed = new Promise<void>(resolve => {release = resolve;});
+  await page.route("**/api/v1/comparison/simulations", async route => {await delayed; try {await route.continue();} catch { /* Request was explicitly cancelled by editing. */ }});
+  await page.getByRole("button", {name: "Confirmar revisão e comparar"}).click();
+  await page.getByRole("button", {name: "Editar dados", exact: true}).click(); release();
+  await expect(page.getByRole("heading", {level: 1})).toContainText("Declare o cenário");
+  await expect(page.getByRole("heading", {name: "Quatro caminhos, as mesmas origens"})).toHaveCount(0);
+  await expect(page.locator('input[name="opening"]')).toHaveValue("200,00");
+  await page.unroute("**/api/v1/comparison/simulations");
+  await page.reload(); await expect(page.locator('input[name="opening"]')).toHaveValue("");
+});
