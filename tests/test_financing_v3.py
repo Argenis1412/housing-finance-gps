@@ -347,6 +347,7 @@ def test_v3_minimal_counterexamples_have_exact_centavo_safe_settlement(
     ), case
 
 
+@pytest.mark.slow
 @pytest.mark.parametrize("strategy", ("sac", "price"))
 @pytest.mark.parametrize("rate", ("0.0000", "0.0001"))
 def test_v3_exhaustive_small_principals_preserve_schedule_and_ledger_invariants(

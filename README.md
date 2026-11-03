@@ -82,11 +82,27 @@ Run strict Python type checking:
 uv run pyright
 ```
 
-Run the synthetic-only test suite:
+Run the fast synthetic-only test suite (the default excludes `slow` tests):
 
 ```text
 uv run pytest -q
 ```
+
+Run only the exhaustive financing matrix:
+
+```text
+uv run pytest -q -m slow
+```
+
+Run the complete synthetic-only suite, including the matrix:
+
+```text
+uv run pytest -q -m ""
+```
+
+Unregistered test markers fail collection. CI runs independent `validation`
+and `financing_matrix` jobs: the fast suite has domain coverage instrumentation,
+and the exhaustive matrix runs without coverage instrumentation.
 
 The configured CI commands, including branch instrumentation and the 95%
 total coverage gate over `domain/`, are recorded in

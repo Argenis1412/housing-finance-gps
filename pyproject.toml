@@ -25,6 +25,8 @@ typeCheckingMode = "strict"
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+addopts = '--strict-markers -m "not slow"'
+markers = ["slow: exhaustive financing matrix excluded from routine test runs"]
 
 [tool.uv]
 package = false
