@@ -8,14 +8,14 @@
 ## Purpose and boundary
 
 The [synthetic regression fixture](../fixtures/milestone-0-synthetic-regression.json)
-is a public, invented reference for future deterministic validation. It is not
+is a public, invented reference for deterministic validation. It is not
 a simulation engine, a proposal, a prediction, or a sanitized family record.
 Its numeric values were selected solely to make posted-centavo transitions
 reviewable.
 
 The fixture uses the financial contract's nominal-BRL, effective-rate,
 one-based-month, 60-month, and `ROUND_HALF_UP` conventions. All expected
-amounts are exact decimal-string checkpoints: a future implementation must
+amounts are exact decimal-string checkpoints: a supported implementation must
 match them with zero tolerance after applying the contractual posting order.
 The fixture's `engine_version`, `ruleset_version`, and `data_snapshot_id`
 identify this contract reference only; they do not claim that an application
@@ -75,8 +75,9 @@ add one.
 
 ## Selected QA baseline
 
-The following tools are selected for future implementation work items unless
-this document records them as configured.
+The following table records the selected baseline. The implementation status
+below distinguishes configured checks from tools awaiting their own approved
+work items; it does not change the accepted fixture contract.
 
 | Area | Selected baseline | Intended guarantee |
 | --- | --- | --- |
@@ -87,12 +88,27 @@ this document records them as configured.
 | Formula-boundary review | Static source review plus API-contract tests | Reject authoritative interest, amortization, balance, ranking, sensitivity, and break-even calculations outside Python. |
 | CI | GitHub Actions; dependency review and secret scanning remain deferred | Repeatable checks using synthetic fixtures only. |
 
-Ruff 0.16.0, Pyright strict checks, and pytest are configured through a locked
-Python 3.13 `uv` environment. GitHub Actions synchronizes the lockfile, then
-runs lint, type checking, and the synthetic-only suite with read-only
-repository permissions. Formatting, API endpoints, OpenAPI-to-TypeScript
-generation, frontend, browser, dependency review, and secret scanning remain
-deferred until their own approved implementation work items.
+### Current implementation status
+
+The locked Python 3.13 `uv` environment configures Ruff, strict Pyright over
+`domain/`, `application/`, `api/`, and `tests/`, pytest, deterministic Hypothesis
+properties, and Coverage.py. GitHub Actions synchronizes the lockfile, runs
+lint and type checking, then runs the complete synthetic-only suite with branch
+instrumentation over `domain/` and enforces a 95% total coverage threshold.
+Repository permissions are read-only.
+
+The bounded FastAPI v1 financing projection is implemented under the
+[accepted API contract](fastapi-v1-financing-projection.md). HTTP tests cover
+projection parity, public errors, resource limits, and determinism; OpenAPI
+schema validation and dependency-boundary checks are also configured. This
+endpoint is an ephemeral projection, not a simulation-creation or replay API.
+
+SAC, Price, and rent-plus-investment have executable synthetic regression
+checks. Consortium remains a contract reference without an implemented
+strategy. Formatting, OpenAPI-to-TypeScript generation, frontend, browser,
+dependency review, and secret scanning remain deferred. See
+[current QA status](../context/CONTEXT.md#qa-status) for commands and configured
+check ownership.
 
 ## Validation requirements for this artifact
 
@@ -116,9 +132,10 @@ deferred until their own approved implementation work items.
 
 - Executable fixture schema validation and financial regression tests for
   consortium.
-- Formatting, dependency review, secret scanning, property-based testing,
-  coverage gates, and further CI configuration.
-- FastAPI, Next.js, TypeScript, persistence, browser code, and Python-domain
-  work beyond the implemented SAC slice.
+- Formatting, dependency review, secret scanning, and OpenAPI-to-TypeScript
+  generation.
+- Next.js, TypeScript, persistence, browser code, simulation creation, and
+  financial behavior beyond the implemented financing and rent-plus-investment
+  foundations.
 - Any real-case export, signing, encryption, or automated local-validation
   tooling.
