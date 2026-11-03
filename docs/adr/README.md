@@ -44,6 +44,7 @@ Use [0000-template.md](0000-template.md). Every accepted ADR states:
 | [ADR-0006](0006-versioned-financing-replay-contract.md) | Accepted | Define immutable financing replay evidence and executable historical verification. |
 | [ADR-0007](0007-versioned-fixed-monthly-financing-fee.md) | Superseded by ADR-0008 | Historical v2 admission of the fixed monthly financing fee. |
 | [ADR-0008](0008-centavo-safe-financing-settlement.md) | Accepted | Define centavo-safe settlement and version-owned fixed-fee availability. |
+| [ADR-0009](0009-explicit-consortium-scenarios-and-replay.md) | Accepted | Admit explicit synthetic consortium schedules and dedicated retained v1 replay. |
 
 Do not create speculative ADRs merely to fill the initial list. Write each
 record when its decision is required for an approved work item.

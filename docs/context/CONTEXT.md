@@ -11,7 +11,9 @@
   accumulating capital.
 - **Implemented capabilities:** SAC and Price financing, including explicit
   centavo-safe v3 settlement and fixed monthly fees; retained v1/v2/v3 financing
-  replay; a neutral 60-month comparison ledger; and rent-plus-investment.
+  replay; a neutral 60-month comparison ledger; rent-plus-investment; and
+  synthetic consortium v1 with explicit contemplation, waiting costs and
+  dedicated in-memory replay.
   Milestone 0 documentation readiness is complete, including governance,
   provenance, financial contracts, and the synthetic regression reference.
 - **API boundary:** A bounded FastAPI v1 endpoint exposes ephemeral SAC or
@@ -23,12 +25,12 @@
   Pyright, pytest, deterministic Hypothesis properties, HTTP/OpenAPI contract
   tests, and a domain coverage gate are configured in GitHub Actions.
 - **Remaining boundaries:** Simulation creation, persistence, Next.js frontend,
-  consortium, eligibility rules, and comparison contracts beyond the neutral
+  real-proposal consortium admission, eligibility rules, and comparison contracts beyond the neutral
   ledger and version envelope remain unimplemented. Insurance and nonzero
   financing indexation remain unsupported. This state summary does not declare
   the financing milestone complete or validate the private reference case.
-- **Current priority:** Define the Track C contract for the simplified
-  consortium domain before implementation.
+- **Current priority:** Run the periodic workflow audit after the separately
+  authorized consortium merge, before beginning M4 comparator behavior.
 
 ## Approved direction
 
@@ -70,6 +72,7 @@ The canonical scope and acceptance criteria are in the
 | `domain/financing/v2.py` | Explicit v2 SAC/Price live projections over the retained v2 evaluator. |
 | `domain/financing/v3.py` | Explicit v3 SAC/Price live projections over the centavo-safe evaluator. |
 | `domain/rent_plus_investment.py` | Pure rent-plus-investment postings, feasibility boundary, and 60-month comparison ledger. |
+| `domain/consortium/` | Synthetic v1 proposal/scenario boundary, classified monthly postings, common ledger projections and dedicated retained replay. |
 | `tests/` | Synthetic regression, boundary, replay, domain-property, HTTP/OpenAPI, and dependency-boundary tests. |
 | `.claude/` | Claude-specific adapters that defer to repository-owned rules. |
 | `.project/` | Optional mechanical review-plan gate artifacts. |
