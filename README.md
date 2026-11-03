@@ -17,16 +17,17 @@ only after the calculation engine has been validated.
 Milestone 0 documentation is ready: governance, provenance, financial
 contracts, a synthetic regression reference, and a selected QA baseline are
 recorded. The implemented deterministic domain includes SAC,
-Price, versioned financing replay, a neutral 60-month comparison ledger, and
-rent-plus-investment. A bounded FastAPI v1 endpoint exposes ephemeral SAC or
-Price v3 calculation projections under the
+Price, versioned financing replay, a neutral 60-month comparison ledger,
+rent-plus-investment, and synthetic consortium v1 with explicit contemplation
+scenarios and in-memory replay. A bounded FastAPI v1 endpoint exposes ephemeral
+SAC or Price v3 calculation projections under the
 [financing projection contract](docs/specifications/fastapi-v1-financing-projection.md).
 Its synthetic-only test suite, including domain properties and HTTP/OpenAPI
 contract tests, is checked in CI with a domain coverage gate.
 
 Simulation creation, comparison contracts beyond the neutral ledger and
-version envelope, frontend, persistence, consortium, and eligibility rules
-remain unimplemented. The API does not expose replay or create simulation
+version envelope, frontend, persistence, real-proposal consortium admission,
+and eligibility rules remain unimplemented. The API does not expose replay or create simulation
 results. Real financial data remains outside source control. Dependency
 review remains deferred.
 

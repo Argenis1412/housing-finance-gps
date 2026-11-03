@@ -106,9 +106,12 @@ projection parity, public errors, resource limits, and determinism; OpenAPI
 schema validation and dependency-boundary checks are also configured. This
 endpoint is an ephemeral projection, not a simulation-creation or replay API.
 
-SAC, Price, and rent-plus-investment have executable synthetic regression
-checks. Consortium remains a contract reference without an implemented
-strategy. Formatting, OpenAPI-to-TypeScript generation, frontend, browser,
+SAC, Price, rent-plus-investment and consortium v1 have executable synthetic
+regression checks. Consortium preserves M0 checkpoints and additionally tests
+waiting costs, three scenario kinds, support declarations, horizon feasibility
+and exact replay under [ADR-0009](../adr/0009-explicit-consortium-scenarios-and-replay.md).
+M0 fixture identifiers remain contract-reference identifiers and are not replaced
+by runtime consortium versions. Formatting, OpenAPI-to-TypeScript generation, frontend, browser,
 dependency review, and secret scanning remain deferred. See
 [current QA status](../context/CONTEXT.md#qa-status) for commands and configured
 check ownership.
@@ -130,11 +133,15 @@ check ownership.
 - Rent-plus-investment asserts its month-0 allocation and all named synthetic
   checkpoints with zero tolerance, then verifies posting and ledger
   conservation for every comparison period.
+- Consortium v1 asserts every M0 checkpoint unchanged. Its adapter supplies the
+  fixture's documented zero exclusions explicitly; missing request values are
+  not defaulted. Independent synthetic cases and deterministic properties protect
+  waiting, contemplation, cash, accounting and historical replay guarantees.
 
 ## Deferred work
 
-- Executable fixture schema validation and financial regression tests for
-  consortium.
+- Standalone executable fixture schema validation and real-proposal consortium
+  admission beyond the synthetic v1 boundary.
 - Formatting, dependency review, secret scanning, and OpenAPI-to-TypeScript
   generation.
 - Next.js, TypeScript, persistence, browser code, simulation creation, and

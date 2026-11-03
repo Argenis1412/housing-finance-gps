@@ -1,9 +1,9 @@
 # Milestone 0 Financial Contracts
 
 > Status: accepted Milestone 0 contract
-> Related ADRs: [ADR-0003](../adr/0003-money-rate-period-rounding-and-ledger.md), [ADR-0004](../adr/0004-backend-authoritative-financial-contracts.md), [ADR-0005](../adr/0005-financing-extension-admission-boundary.md), [ADR-0006](../adr/0006-versioned-financing-replay-contract.md)
+> Related ADRs: [ADR-0003](../adr/0003-money-rate-period-rounding-and-ledger.md), [ADR-0004](../adr/0004-backend-authoritative-financial-contracts.md), [ADR-0005](../adr/0005-financing-extension-admission-boundary.md), [ADR-0006](../adr/0006-versioned-financing-replay-contract.md), [ADR-0007](../adr/0007-versioned-fixed-monthly-financing-fee.md), [ADR-0008](../adr/0008-centavo-safe-financing-settlement.md), [ADR-0009](../adr/0009-explicit-consortium-scenarios-and-replay.md)
 > Related governance: [reference-case governance](reference-case-governance.md)
-> Related issue: #5
+> Related issues: #5 (M0), #47 (consortium v1)
 
 ## Purpose and scope
 
@@ -57,7 +57,11 @@ The two liability balances are mutually exclusive and exhaustive:
     liquidity = cash + liquid_financial_assets
     cumulative_housing_cost = sum(nonrecoverable_housing_cost through period t)
 
-Down payments, credit-letter application, principal payments, credit-component payments, and transfers into financial assets are recoverable transfers. They are never cumulative housing cost. Future obligations and future rent are not capitalized into a current ledger row.
+Down payments, principal payments, credit-component payments, and transfers
+into financial assets are recoverable cash transfers. Credit-letter application
+is a noncash recoverable event recorded separately in the consortium trace;
+it is not another `recoverable_transfer` cash outflow. None is cumulative
+housing cost. Future obligations and rent are not capitalized into a current row.
 
 ## Financing contracts
 
@@ -127,20 +131,64 @@ ledger principal balance is negative.
 
 ### Supported inputs
 
-A consortium scenario requires a proposal-supplied monthly schedule, positive credit_letter, positive term_months, explicit contemplation month, and a property purchase event. Each schedule row classifies every amount as one of:
+The implemented synthetic v1 boundary is admitted by
+[ADR-0009](../adr/0009-explicit-consortium-scenarios-and-replay.md). It does
+not validate a real proposal. Monetary values are nonnegative exact-two-fraction
+nominal BRL strings; the credit letter is positive. Signs and leading zeros
+normalize, including signed zero as `0.00`. Periods are actual integers, never
+booleans; term is `1..600`, a technical cap.
 
-- credit_component;
-- administration_fee;
-- reserve_fund;
-- insurance;
-- cash_bid;
-- another explicitly supported non-recoverable cost.
+| Classification | Fields and meaning |
+| --- | --- |
+| Observed data | `comparison_opening_cash`: available starting cash without inferred income or borrowing. |
+| Contractual data | `credit_letter`, `term_months`, `monthly_schedule` and the four support declarations below. |
+| Projected assumptions | `scenario_kind`, `contemplation_month`, `property_purchase_event`, `property_price`, `cash_top_up`, `waiting_housing_costs`. |
+| Rule requests | `requested_features`: optional machine-identifier array, default empty. |
+| Versioned rules | Normalized `rule_conventions`: BRL, nominal basis, one-based periods, `ROUND_HALF_UP`, 60-month horizon and ruleset version. |
 
-An unclassified amount, embedded bid, probabilistic contemplation date, undocumented monetary-correction clause, or contractual clause with no ledger treatment returns unsupported_contract_clause.
+Each `monthly_schedule` row has exactly `month`, `credit_component`,
+`administration_fee`, `reserve_fund`, and `insurance`, including explicit zeros.
+Rows are ordered `1..term_months`, without gaps or duplicates. Credit components
+sum exactly to the letter; no percentage calculation or final-row repair occurs.
+The proposal must explicitly declare:
+
+- `credit_components_apply_to_credit_letter=true`; false is unsupported;
+- `correction="documented_zero"`; `requested_nonzero` is unsupported;
+- `reserve_fund_treatment="nonrecoverable_no_refund"`; `refundable` is unsupported;
+- `installment_schedule_treatment="fixed_independent_of_contemplation"`;
+  `changes_on_contemplation` is unsupported, even with precomputed amounts.
+
+Unknown declaration variants are invalid input. Amounts alone do not establish
+these support conditions. Source classifications accompany normalized input;
+`reference_basis="synthetic_contract_reference"` identifies the support basis,
+not observed household data or real-proposal validation.
+
+### Explicit scenarios and waiting costs
+
+One execution receives `scenario_kind` (`early`, `intermediate`, or `late`) and
+an explicit `contemplation_month` in `1..term_months`; results preserve both.
+Labels infer no dates, probabilities or ordering across executions. A one-month
+term remains valid without inventing three dates. `property_purchase_event`
+must be true; false is unsupported. Purchase follows contribution and waiting
+cost in the selected month; delayed purchase is unsupported.
+
+`waiting_housing_costs` has exactly ordered `{month, amount}` rows for
+`1..min(contemplation_month, 60)`, including explicit zeros and the purchase
+month's cost when in horizon. There is no rent formula or implicit zero filling.
+Post-purchase housing/ownership costs are unadmitted.
+
+`property_price = credit_letter + cash_top_up`, with both scenario amounts
+explicit. `cash_top_up` replaces M0's documentary `cash_bid` alias, which meant
+only purchase complement. This explicitly replaces the old alias and its
+out-of-period failure rule for v1. No prior consortium runtime exists to migrate;
+a `cash_bid` key now fails as an unsupported clause, never as a modeled bid.
 
 ### Credit right and contemplation transition
 
-Before contemplation, a credit_component increases consortium_credit_right_balance only when the proposal explicitly states that the contribution is applicable to the credit letter. The same amount decreases cash as a recoverable transfer. Administration, reserve, insurance, and other classified costs decrease cash and increase cumulative housing cost.
+Month 0 contains only opening cash. Before contemplation, credit contributions
+increase the non-liquid credit right and decrease cash as recoverable transfers.
+Administration, reserve, insurance and waiting costs decrease cash and increase
+nonrecoverable housing cost. Liquid financial assets remain zero.
 
 In the contemplation month, after that month's classified contribution is posted:
 
@@ -150,12 +198,59 @@ In the contemplation month, after that month's classified contribution is posted
     consortium_credit_right_balance becomes 0.00
     consortium_credit_obligation_balance = credit_letter - transferred_credit_right
 
-The transferred credit right may not exceed the credit letter. Later applicable
-credit-component payments reduce the consortium credit obligation as
-recoverable transfers. A cash_bid is supported only as the cash_top_up in its
-contemplation-month row; a cash_bid in another period is infeasible. It is a
-recoverable transfer, not a housing cost. The contract does not infer legal
-rights, group behavior, or bid success.
+Later credit contributions reduce the obligation. For each month:
+
+    contractual_payment = credit_component + administration_fee + reserve_fund + insurance
+    recoverable_transfer = credit_component + cash_top_up_posted_this_month
+    nonrecoverable_housing_cost = administration_fee + reserve_fund + insurance + waiting_housing_cost
+    cash_outflow = contractual_payment + waiting_housing_cost + cash_top_up_posted_this_month
+
+Positive classified flows are cash outflows. `transferred_credit_right` and
+`credit_letter_applied` are separate noncash events in the purchase month;
+neither creates another cash outflow. All common identities hold, financing
+principal is zero, and net-worth change equals negative nonrecoverable cost.
+Integer-centavo sums/differences of already posted amounts need no extra rounding
+and cannot depend on the caller's Decimal context.
+
+Cash exactly zero is valid. Shortfall through month60 returns
+`infeasible_scenario` without partial output. The full schedule reconciles
+components only; no post-60 cash feasibility or balances are asserted. Later
+contemplation leaves no property, credit obligation or top-up in the ledger.
+After settlement inside the horizon, balances carry with zero contractual flows.
+Property stays at purchase value; income, investment returns and unrecorded costs
+are not inferred.
+
+### Failure and replay boundary
+
+All request fields above are required except `requested_features`. Missing data
+is `invalid_input`; unknown keys at every object level are
+`unsupported_contract_clause`. Precedence is known structure/types/bounds,
+support declarations, reconciliation, then cash feasibility. Feature identifiers
+are nonempty lowercase machine identifiers: `tax`, `fgts`, `subsidy` and
+`eligibility` return `unsupported_rule` before other support failures. Any other
+feature identifier returns `unsupported_contract_clause`; malformed identifiers
+are invalid input. Bids, probabilities, refunds, conditional installments,
+correction and other unadmitted clauses must not be omitted to obtain a result.
+Fixed safe failure details never echo proposal text.
+
+The dedicated immutable `ConsortiumReplayEnvelope` records strategy `consortium`,
+canonical raw request, explicit `data_snapshot_id`, sealed outcome and versions
+`consortium-replay-v1`, `consortium-explicit-schedule-v1`, `consortium-ruleset-v1`.
+Success includes classified normalized input, full schedule, 60 postings and 61
+common ledger rows; failure includes code and safe detail. The factory rejects
+malformed, duplicate, non-object or noncanonical JSON with `ValueError`; canonical
+domain-invalid objects can seal typed failures. The closed JCS codec supports
+safe integers, strings, booleans, null, arrays and objects, rejecting float JSON
+numbers, nonfinite values and unpaired surrogates.
+
+Replay selects the version tuple before parsing, reexecutes the sole retained
+standard-library evaluator and compares the whole canonical outcome exactly.
+Unknown versions, malformed evidence or mismatches return
+`incompatible_contract_version`, never the stored outcome as verified. Live
+projections only decode the authoritative trace into immutable common rows.
+Replay proves numerical reexecution, not snapshot authenticity or signatures.
+Private source provenance remains under the governance contract; no clock,
+service, HTTP, persistence or change to financing replay is involved.
 
 ## Rent-plus-investment contract
 
@@ -273,8 +368,10 @@ The backend financial domain is authoritative. The frontend may collect inputs, 
 - API wire schemas and OpenAPI generation.
 - Comparison contracts beyond the neutral common ledger and the version
   envelope.
-- The consortium implementation.
-- Property appreciation, inflation, monetary correction, fees, insurance, taxes, and extraordinary amortization.
+- Consortium support beyond the synthetic v1 schedule/scenario boundary.
+- Property appreciation, inflation, monetary correction, taxes, extraordinary
+  amortization, and fee/insurance variants beyond the explicitly admitted
+  financing fee and supplied consortium components.
 - FGTS, MCMV, and all other eligibility rules.
 - SAC and Price implementations are limited to their accepted contracts and
   the existing `sac_basic`, `price_basic`, and
