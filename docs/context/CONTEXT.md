@@ -1,6 +1,6 @@
 # Housing Finance GPS — Current Context
 
-> Last updated: August 22, 2026
+> Last updated: November 3, 2026
 > Read [AGENTS.md](../../AGENTS.md) before this document. This file describes
 > current repository reality, not future intent and not implementation history.
 
@@ -9,39 +9,26 @@
 - **Product:** A private Brazilian housing decision-support tool comparing
   SAC or Price financing, consortium scenarios, and renting while
   accumulating capital.
-- **Delivery state:** Milestone 0 documentation readiness is complete. SAC and
-  Price are the implemented financing behaviors, delivered through PR #12 /
-  Issue #11 and PR #16 / Issue #15 respectively. PR #18 / Issue #17 harden
-  their unsupported-clause boundary and synthetic invariants without adding a
-  new financial behavior. PR #20 / Issue #19 merge the deterministic
-  rent-plus-investment foundation and neutral common-ledger ownership. The
-  PR #26 / Issue #25 delivered the retained v1 financing replay evaluator,
-  which emits and reexecutes sealed,
-  versioned SAC and Price envelopes without live financing or ledger
-  dependencies. PR #32 / Issue #31 delivered the v2 fixed-monthly-fee replay
-  evaluator and explicit live projections, retaining v1 historical behavior.
-  Issue #36 adds explicit centavo-safe v3 SAC and Price settlement while
-  retaining executable v1/v2 replay evidence. Issue #34 adds deterministic
-  Hypothesis domain properties and a branch-coverage gate without changing
-  domain behavior, contracts, or versions. PR #40 / Issue #39 delivered one bounded,
-  ephemeral FastAPI v1 financing-calculation projection over explicit v3 SAC
-  and Price behavior; it does not add simulation creation, persistence,
-  replay, or a frontend. A locked
-  Python 3.13 development manifest, strict Pyright, pytest, Ruff, and GitHub
-  Actions validation are configured.
-- **Repository state:** Git is available. Work follows the issue-first,
-  issue-numbered-branch, draft-pull-request workflow in the development
-  process.
-- **Architecture:** Product direction is approved. Reference-case governance,
-  simulation provenance, financial conventions, backend authority, and
-  verifiable financing-replay admission are documented in ADRs. A synthetic
-  regression reference and a selected, partially configured QA baseline complete
-  Milestone 0 documentation.
-- **Current priority:** Define the Track C contract for the simplified consortium
-  domain before implementation. The 95% total Coverage.py gate with branch
-  instrumentation over `domain/` remains required. Insurance and nonzero
-  indexation remain deferred; any financial or architecture-critical work
-  remains Track C approval-gated.
+- **Implemented capabilities:** SAC and Price financing, including explicit
+  centavo-safe v3 settlement and fixed monthly fees; retained v1/v2/v3 financing
+  replay; a neutral 60-month comparison ledger; and rent-plus-investment.
+  Milestone 0 documentation readiness is complete, including governance,
+  provenance, financial contracts, and the synthetic regression reference.
+- **API boundary:** A bounded FastAPI v1 endpoint exposes ephemeral SAC or
+  Price v3 calculation projections under the
+  [financing projection contract](../specifications/fastapi-v1-financing-projection.md).
+  It does not create simulation results or expose replay, persistence, or a
+  frontend. Historical replay remains a domain capability.
+- **Validation:** A locked Python 3.13 development environment, Ruff, strict
+  Pyright, pytest, deterministic Hypothesis properties, HTTP/OpenAPI contract
+  tests, and a domain coverage gate are configured in GitHub Actions.
+- **Remaining boundaries:** Simulation creation, persistence, Next.js frontend,
+  consortium, eligibility rules, and comparison contracts beyond the neutral
+  ledger and version envelope remain unimplemented. Insurance and nonzero
+  financing indexation remain unsupported. This state summary does not declare
+  the financing milestone complete or validate the private reference case.
+- **Current priority:** Define the Track C contract for the simplified
+  consortium domain before implementation.
 
 ## Approved direction
 
@@ -68,7 +55,7 @@ The canonical scope and acceptance criteria are in the
 | `docs/product/` | Approved product direction and MVP boundary. |
 | `docs/process/` | Development, review, approval, and QA workflow. |
 | `docs/context/` | Current state, history, open questions, and discoveries. |
-| `docs/adr/` | ADR guidance and future accepted architecture decisions. |
+| `docs/adr/` | Accepted architecture decisions and their rationale. |
 | `application/financing_projection.py` | Framework-independent use case selecting the fixed v3 financing projection. |
 | `api/` | FastAPI v1 projection schemas, HTTP resource limits, public error mapping, and route. |
 | `domain/values.py` | Immutable BRL money and rate values plus canonical runtime failures for the financing domain. |
@@ -83,17 +70,12 @@ The canonical scope and acceptance criteria are in the
 | `domain/financing/v2.py` | Explicit v2 SAC/Price live projections over the retained v2 evaluator. |
 | `domain/financing/v3.py` | Explicit v3 SAC/Price live projections over the centavo-safe evaluator. |
 | `domain/rent_plus_investment.py` | Pure rent-plus-investment postings, feasibility boundary, and 60-month comparison ledger. |
-| `tests/` | Synthetic-only regression and boundary tests for SAC, Price, financing replay, v3 centavo-safe settlement (`tests/test_financing_v3.py`), and rent-plus-investment. |
+| `tests/` | Synthetic regression, boundary, replay, domain-property, HTTP/OpenAPI, and dependency-boundary tests. |
 | `.claude/` | Claude-specific adapters that defer to repository-owned rules. |
 | `.project/` | Optional mechanical review-plan gate artifacts. |
 | `scripts/` | Optional workflow enforcement scripts; not application code. |
 
-The repository contains a bounded FastAPI v1 calculation-projection API. The
-API does not expose replay, while the retained v1, v2, and v3 replay evaluators
-remain part of the domain. There is no simulation-creation, persistence, Next.js
-frontend, database, or comparison contract beyond the neutral common ledger and
-version envelope. Consortium and eligibility rules remain unimplemented. Real
-financial and identifying data remain prohibited from source control.
+Real financial and identifying data remain prohibited from source control.
 
 ## Active architecture invariants
 
@@ -103,40 +85,41 @@ those rules.
 
 ## QA status
 
-The financing domain has a synthetic-only pytest suite: `uv run pytest -q`
-passes 76 tests. The suite protects monetary and rate validation,
-unsupported-case classification, posted-centavo SAC rounding and settlement,
-Price exact-rational installments, posted-centavo rounding and settlement,
-caller-context independence, separate schedule and ledger time domains,
-synthetic fixture checkpoints, synthetic unsupported-clause parity, schedule
-and ledger invariants, rent-plus month-0 allocation and feasibility,
-determinism, immutability, canonical versioned financing replay, full-trace
-equivalence, historical positive-fee failure preservation, and the v1
-600-month schedule boundary, explicit and cumulative v2 fee posting, v2
-financial parity for absent and zero fees, independent SAC and Price centavo
-checkpoints, version-specific replay codecs, byte-sensitive v1/v2 envelope
-stability, explicit v3 codec and dispatch validation, v3 fee-version
-isolation, and the synthetic centavo-safe SAC/Price matrix for principals from
-one to fifty centavos, terms one to sixty, rates 0.0000 and 0.0001, and absent
-or R$0.01 fixed fees.
+The configured tools and locked versions are owned by `pyproject.toml` and
+`uv.lock`; the CI sequence is owned by `.github/workflows/validation.yml`.
 
-Ruff 0.16.0, Pyright strict checks over `domain/` and `tests/`, pytest,
-Hypothesis, and Coverage.py are locked through `pyproject.toml` and `uv.lock`
-for Python 3.13. Domain properties run deterministically with no example
-database or deadline and 24 examples per property. A local targeted run
-excluding the exhaustive v3 matrix reported 115 passed tests; the historical
-76-test count is not the current suite total. GitHub Actions runs the complete
-pytest suite once under branch instrumentation over `domain/`, followed by a
-95% total Coverage.py gate. The delivered 97% figure is an observed local
-measurement: the initial full instrumented run consumed approximately 21m 13s
-CPU (about 2h 32m wall-clock time in the observed desktop session), and
-targeted coverage data was appended afterward without repeating the v3 matrix.
-The latest successful CI run completed in 8m 38s with a 15-minute job timeout.
-Formatting, contract tests,
-frontend tests, browser tests, and package/dependency review remain
-unconfigured.
-Milestone 0 selected and recorded the broader future baseline in the
+- Ruff checks Python lint rules. Automated formatting is not configured.
+- Pyright runs in strict mode over `domain/`, `application/`, `api/`, and
+  `tests/`.
+- The synthetic-only pytest suite covers independent financial checkpoints,
+  typed unsupported cases, schedule and ledger identities, deterministic and
+  immutable results, historical versioned replay, and v3 centavo settlement.
+- Hypothesis properties run deterministically without an example database or
+  deadline. The exhaustive small-principal v3 matrix remains part of the
+  ordinary suite; no `slow` marker or separate matrix job is configured.
+- HTTP/OpenAPI tests validate v3 projection parity, deterministic responses,
+  public errors, resource limits, the schema, and dependency boundaries.
+- GitHub Actions runs the complete suite once with branch instrumentation over
+  `domain/`, then enforces Coverage.py's combined total threshold of 95%.
+  `application/` and `api/` have tests but are outside that measured source scope.
+
+Configured commands:
+
+```text
+uv sync --frozen
+uv run ruff check .
+uv run pyright
+uv run coverage run --branch --source=domain -m pytest -q
+uv run coverage report --fail-under=95
+```
+
+For an uninstrumented run of the same suite, use `uv run pytest -q`.
+
+OpenAPI-to-TypeScript generation, frontend tests, browser tests, dependency
+review, and secret scanning remain unconfigured. The broader selected baseline
+is recorded in the
 [synthetic regression reference and QA baseline](../specifications/milestone-0-synthetic-reference-and-qa.md).
+Concrete deferred QA findings are recorded in [discoveries.md](discoveries.md).
 
 Documentation changes are validated by checking:
 

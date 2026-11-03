@@ -17,25 +17,32 @@ only after the calculation engine has been validated.
 Milestone 0 documentation is ready: governance, provenance, financial
 contracts, a synthetic regression reference, and a selected QA baseline are
 recorded. The implemented deterministic domain includes SAC,
-Price, a neutral 60-month comparison ledger, and rent-plus-investment. Its
-synthetic-only test suite is checked in CI.
+Price, versioned financing replay, a neutral 60-month comparison ledger, and
+rent-plus-investment. A bounded FastAPI v1 endpoint exposes ephemeral SAC or
+Price v3 calculation projections under the
+[financing projection contract](docs/specifications/fastapi-v1-financing-projection.md).
+Its synthetic-only test suite, including domain properties and HTTP/OpenAPI
+contract tests, is checked in CI with a domain coverage gate.
 
-Comparison contracts beyond the neutral ledger and version envelope, API,
-frontend, persistence, consortium, eligibility rules, and real financial data
-remain unimplemented or out of scope. Dependency review remains deferred.
+Simulation creation, comparison contracts beyond the neutral ledger and
+version envelope, frontend, persistence, consortium, and eligibility rules
+remain unimplemented. The API does not expose replay or create simulation
+results. Real financial data remains outside source control. Dependency
+review remains deferred.
 
 See [current context](docs/context/CONTEXT.md) for the exact active priority.
 
-## Planned architecture
+## Architecture
 
 - **Frontend:** Next.js and TypeScript, deployed independently.
-- **API:** FastAPI with typed, versioned JSON contracts.
+- **API:** FastAPI with the implemented typed v1 financing projection.
 - **Domain:** pure Python financial calculations without external calls.
 - **Persistence:** SQLite for the private MVP, behind migrations.
 - **Explanation:** deterministic templates first; optional grounded LLM
   explanation later.
 
 The frontend never owns authoritative financial formulas.
+The frontend, persistence, and explanation layers remain planned.
 
 ## Documentation
 
@@ -80,6 +87,10 @@ Run the synthetic-only test suite:
 ```text
 uv run pytest -q
 ```
+
+The configured CI commands, including branch instrumentation and the 95%
+total coverage gate over `domain/`, are recorded in
+[QA status](docs/context/CONTEXT.md#qa-status).
 
 ## Privacy and limitations
 

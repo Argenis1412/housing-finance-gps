@@ -30,8 +30,11 @@ reopened.
 
 | Item | File or area | Severity | Notes |
 | --- | --- | ---: | --- |
-| No application scaffold | Repository | Expected | Milestone 0 precedes implementation. |
-| Broader QA toolchain | Repository | Expected | Minimal Ruff and GitHub Actions validation are configured; formatting, type checking, contract tests, frontend tests, browser tests, dependency review, and secret scanning remain deferred. |
+| Broader QA toolchain | Repository | Expected | Formatting, OpenAPI-to-TypeScript generation, frontend tests, browser tests, dependency review, and secret scanning remain deferred. See [current QA status](CONTEXT.md#qa-status) for configured checks. |
+
+Concrete QA discoveries and their next decisions are recorded in
+[discoveries.md](discoveries.md). The dated audits below retain their
+historical observations; they do not describe the current validation baseline.
 
 ## Failed approaches
 
