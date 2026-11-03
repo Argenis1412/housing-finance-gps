@@ -2,11 +2,14 @@
 
 from __future__ import annotations
 
-from dataclasses import FrozenInstanceError
+from dataclasses import FrozenInstanceError, asdict
 from decimal import Decimal, ROUND_DOWN, localcontext
 import json
+import hashlib
 from pathlib import Path
 from typing import Callable, cast
+
+import pytest
 
 from domain.financing.contracts import ComparisonLedgerRow as FinancingLedgerRow
 from domain.ledger import ComparisonLedgerRow
@@ -227,3 +230,36 @@ def test_rent_plus_outputs_are_deterministic_context_independent_and_immutable()
         pass
     else:
         raise AssertionError("result collections must be immutable")
+
+
+# Complete normalized input + output hashes captured from main 30ee36d before
+# extraction. These do not compare two adapters sharing the new evaluator.
+@pytest.mark.parametrize(("changes", "expected"), [
+    ({}, "4da070284a13ec9a53019346fccc65e4f66dbafb6f0c89ba4d027e8e58ac6594"),
+    ({"return_rate_value": "0", "rent_adjustment_rate_value": "0", "monthly_contribution": "0.00", "initial_invested_capital": "0.00"},
+     "4237dbfbfb64ba2030770a0cc9f0122c017f155518ac21597e6346096b80cfe1"),
+    ({"comparison_opening_cash": "100.00", "starting_monthly_rent": "1.00", "initial_invested_capital": "1.00", "monthly_contribution": "0.00", "rent_adjustment_rate_value": "0.005", "return_rate_value": "0.005", "first_rent_adjustment_month": 2},
+     "c48197ece21642667358145eb121fe171ac8d19cc0e606d052aa8670e3440060"),
+    ({"first_rent_adjustment_month": 61}, "4f3426dbac04ec9fe0b3c59e2b93b4bb88ce07cc86307f9da9ed4778df9ec6b3"),
+    ({"initial_invested_capital": "20000.01"}, "01b1400656b2a5774132755da14c66b20ec975b47325a371cb44f0a66ce850b7"),
+    ({"comparison_opening_cash": "0.00", "starting_monthly_rent": "1.00", "initial_invested_capital": "0.00", "monthly_contribution": "0.00", "return_rate_value": "0", "rent_adjustment_rate_value": "1e5000"},
+     "9bd0a02d16c7f1f651a744916a70cd73381eb24f8603133d432d8f4497ca1061"),
+    ({"starting_monthly_rent": "0.00"}, "5385a9c188eaa05d47277f31ca03e7f1472f1451a02a6ddfa9a436e334aa2c50"),
+    ({"return_rate_value": 1}, "021fc3387f8539df483c1dffc0e27fc5766f82ffbd72deaf89797fbce15686d2"),
+    ({"return_rate_convention": None}, "021fc3387f8539df483c1dffc0e27fc5766f82ffbd72deaf89797fbce15686d2"),
+    ({"return_rate_value": "bad"}, "021fc3387f8539df483c1dffc0e27fc5766f82ffbd72deaf89797fbce15686d2"),
+    ({"rent_adjustment_rate_value": "NaN"}, "a8f06ad121037dfed054d8996f0ab810c46893edad19e7f69e87507cd940f6d9"),
+    ({"return_rate_value": "Infinity"}, "021fc3387f8539df483c1dffc0e27fc5766f82ffbd72deaf89797fbce15686d2"),
+    ({"initial_invested_capital": "-0.00", "monthly_contribution": "-0.00"},
+     "96b14e1ede89c30fc6f53a41725b6f0a36663b63296806d51a4546a9398a1e4f"),
+    ({"return_rate_value": "1e-2", "rent_adjustment_rate_value": "1e-1"},
+     "3d50880acbf2a0e2417e02b33f631bf819715e298e98722b5fe13fd89963f858"),
+])
+def test_pre_extraction_complete_rent_references(changes: dict[str, object], expected: str) -> None:
+    normalized = normalize_rent_plus_investment_request(_base_request(**changes))
+    outcome = {
+        "normalized": asdict(normalized),
+        "result": None if isinstance(normalized, DomainFailure) else asdict(calculate_rent_plus_investment(normalized)),
+    }
+    raw = json.dumps(outcome, default=lambda value: format(value, "f"), sort_keys=True, separators=(",", ":"))
+    assert hashlib.sha256(raw.encode()).hexdigest() == expected
