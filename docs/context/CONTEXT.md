@@ -13,7 +13,10 @@
   centavo-safe v3 settlement and fixed monthly fees; retained v1/v2/v3 financing
   replay; a neutral 60-month comparison ledger; rent-plus-investment; and
   synthetic consortium v1 with explicit contemplation, waiting costs and
-  dedicated in-memory replay.
+  dedicated in-memory replay. Minimum synthetic comparison creates explicit
+  in-memory simulation evidence for SAC/Price v3, retained rent v1 and one
+  consortium scenario, with shared-basis admission, mandatory constraints,
+  exact-cent tied groups and aggregate replay.
   Milestone 0 documentation readiness is complete, including governance,
   provenance, financial contracts, and the synthetic regression reference.
 - **API boundary:** A bounded FastAPI v1 endpoint exposes ephemeral SAC or
@@ -24,13 +27,17 @@
 - **Validation:** A locked Python 3.13 development environment, Ruff, strict
   Pyright, pytest, deterministic Hypothesis properties, HTTP/OpenAPI contract
   tests, and a domain coverage gate are configured in GitHub Actions.
-- **Remaining boundaries:** Simulation creation, persistence, Next.js frontend,
-  real-proposal consortium admission, eligibility rules, and comparison contracts beyond the neutral
-  ledger and version envelope remain unimplemented. Insurance and nonzero
+- **Remaining boundaries:** Common monthly resources, persistence, Next.js
+  frontend, real-proposal consortium admission, eligibility rules and comparison
+  beyond the minimum synthetic closed-cash contract remain unimplemented.
+  Only rent invests; this increment does not establish household affordability
+  or complete M4. Insurance and nonzero
   financing indexation remain unsupported. This state summary does not declare
   the financing milestone complete or validate the private reference case.
-- **Current priority:** Run the periodic workflow audit after the separately
-  authorized consortium merge, before beginning M4 comparator behavior.
+- **Current priority:** Define and approve the common-monthly-resources Track C
+  increment before the family-use application/API/UI. Income, expenses,
+  available resources, posting order, surplus and versioned feasibility remain
+  decisions for that increment; a fixed-income field is not preapproved.
 
 ## Approved direction
 
@@ -71,7 +78,9 @@ The canonical scope and acceptance criteria are in the
 | `domain/financing/replay.py` | Immutable neutral replay envelope, versioned emission, and fail-closed dispatcher. |
 | `domain/financing/v2.py` | Explicit v2 SAC/Price live projections over the retained v2 evaluator. |
 | `domain/financing/v3.py` | Explicit v3 SAC/Price live projections over the centavo-safe evaluator. |
-| `domain/rent_plus_investment.py` | Pure rent-plus-investment postings, feasibility boundary, and 60-month comparison ledger. |
+| `domain/rent_plus_investment.py` | Compatible live dataclass adapter over retained rent normalization and postings. |
+| `domain/rent_replay_v1.py` | Retained rent v1 authority preserving cash failure timing and shared rent projection. |
+| `domain/comparison.py` and `domain/comparison_v1.py` | Explicit immutable synthetic simulation creation, version-owned comparison and aggregate replay under the [minimum contract](../specifications/minimum-comparison-v1.md). |
 | `domain/consortium/` | Synthetic v1 proposal/scenario boundary, classified monthly postings, common ledger projections and dedicated retained replay. |
 | `tests/` | Synthetic regression, boundary, replay, domain-property, HTTP/OpenAPI, and dependency-boundary tests. |
 | `.claude/` | Claude-specific adapters that defer to repository-owned rules. |

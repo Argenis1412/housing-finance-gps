@@ -285,6 +285,12 @@ restriction, and future-purchase declarations return
 
 ## Time domains and versions
 
+The separately admitted [minimum comparison v1](minimum-comparison-v1.md)
+defines explicit in-memory simulation creation, shared-basis admission, mandatory
+constraints, exact-cent objective groups and retained aggregate/rent evidence.
+It does not promote HTTP projections or add monthly resources. A separately
+approved resources increment must precede the family-use vertical slice.
+
 The common ledger and comparison metrics stop after month 60. Financing schedules continue through term_months only to reconcile principal and financing totals; they do not extend common liquidity, home-equity, net-worth, or cumulative-cost comparisons beyond month 60.
 
 Every eventual simulation envelope retains engine_version, ruleset_version, and data_snapshot_id under the private-reference provenance boundary. The private envelope and redacted attestation rules are owned by [reference-case governance](reference-case-governance.md). [ADR-0006](../adr/0006-versioned-financing-replay-contract.md) distinguishes a retained historical outcome from verifiable replay: replay must reexecute the selected historical schema, parser, and calculator against the canonical request and prove equivalence to the sealed outcome.
@@ -366,8 +372,8 @@ The backend financial domain is authoritative. The frontend may collect inputs, 
 ## Deferred work
 
 - API wire schemas and OpenAPI generation.
-- Comparison contracts beyond the neutral common ledger and the version
-  envelope.
+- Comparison beyond the admitted minimum synthetic v1 contract, including
+  common monthly resources before a family-use application.
 - Consortium support beyond the synthetic v1 schedule/scenario boundary.
 - Property appreciation, inflation, monetary correction, taxes, extraordinary
   amortization, and fee/insurance variants beyond the explicitly admitted

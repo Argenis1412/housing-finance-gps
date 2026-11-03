@@ -66,6 +66,38 @@ After every five merged behavioral pull requests, review:
 
 Record dated audit results below.
 
+### November 3, 2026 — Five behavioral pull requests after consortium v1
+
+- **Trigger and baseline:** The agreed count is #32, #37, #38, #40 and #48.
+  Tooling-only #35/#46 and documentation deliveries are excluded. No audit
+  after #48 was recorded on clean main at `30ee36d`. This audit precedes
+  Issue #49 comparator behavior.
+- **Review-track fit:** Financial fee admission, centavo settlement, the first
+  public financial boundary and consortium replay warranted Track C. Domain
+  assurance remained bounded tooling; its discovered settlement defect was
+  separated into its own financial work item rather than hidden by tests.
+- **Reviewer signal:** Retained discussions show useful corrections to payment
+  definitions, settlement assertions, schedule length and explicit strategy
+  dispatch. PR #48 contains an automatic-review skip notice; retained GitHub
+  evidence cannot establish every independent review or quantify reviewer noise.
+- **Deferred discoveries:** The matrix-runtime concern was addressed by #46
+  without dropping cases. The TestClient/httpx deprecation warning is now
+  reproduced. The combined coverage gate still measures only `domain/`.
+  Those latter findings remain deferred; this audit authorizes no fixes.
+- **QA determinism and usefulness:** Frozen environment, Ruff and strict
+  Pyright pass. The fast branch-instrumented run passes 258 tests; the separate
+  matrix passes four tests; combined domain coverage displays 97% against 95%.
+  Hypothesis remains deterministic. Local sandbox subprocess restrictions
+  required rerunning Pyright and HTTP tests outside that restriction, without
+  configuration changes. These are local results, not claims about remote CI.
+- **Documentation ownership:** Current state, process, product scope, decisions
+  and discoveries retain separate canonical owners. Historical discovery
+  entries remain intact; current QA commands stay owned by CONTEXT and CI.
+- **Next boundary:** Issue #49 is synthetic closed-cash comparison only.
+  A separately approved monthly-resources increment must precede family-use
+  application/API/UI delivery. No income field or financial extension is
+  admitted by this audit.
+
 ### August 19, 2026 — Five behavioral pull requests
 
 - **Review-track fit:** PRs #12, #16, #18, #20, and #26 changed deterministic

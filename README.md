@@ -25,9 +25,16 @@ SAC or Price v3 calculation projections under the
 Its synthetic-only test suite, including domain properties and HTTP/OpenAPI
 contract tests, is checked in CI with a domain coverage gate.
 
-Simulation creation, comparison contracts beyond the neutral ledger and
-version envelope, frontend, persistence, real-proposal consortium admission,
-and eligibility rules remain unimplemented. The API does not expose replay or create simulation
+The [minimum synthetic comparison](docs/specifications/minimum-comparison-v1.md)
+adds explicit in-memory simulation creation and replay for SAC/Price v3, rent
+and one consortium scenario, mandatory constraints and exact-cent tied groups
+under a fixed net-worth objective. This closed-cash increment has no monthly
+resources; only rent invests. It does not complete M4 or validate household
+affordability. Common monthly resources require a separately approved increment
+before the family-use vertical slice.
+
+Frontend, persistence, real-proposal consortium admission and eligibility rules
+remain unimplemented. The API does not expose replay or create simulation
 results. Real financial data remains outside source control. Dependency
 review remains deferred.
 
