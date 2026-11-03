@@ -164,6 +164,7 @@ def test_retained_evaluator_has_no_live_domain_dependencies(monkeypatch: pytest.
     path = Path("domain/consortium/replay_v1.py")
     tree = ast.parse(path.read_text())
     imports = [node.module for node in ast.walk(tree) if isinstance(node, ast.ImportFrom)]
+    imports.extend(alias.name for node in ast.walk(tree) if isinstance(node, ast.Import) for alias in node.names)
     assert all(module is not None and not module.startswith(("domain", "api", "application")) for module in imports)
     envelope = _envelope()
     from domain import ledger

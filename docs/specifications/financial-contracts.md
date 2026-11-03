@@ -1,7 +1,7 @@
 # Milestone 0 Financial Contracts
 
 > Status: accepted Milestone 0 contract
-> Related ADRs: [ADR-0003](../adr/0003-money-rate-period-rounding-and-ledger.md), [ADR-0004](../adr/0004-backend-authoritative-financial-contracts.md), [ADR-0005](../adr/0005-financing-extension-admission-boundary.md), [ADR-0006](../adr/0006-versioned-financing-replay-contract.md)
+> Related ADRs: [ADR-0003](../adr/0003-money-rate-period-rounding-and-ledger.md), [ADR-0004](../adr/0004-backend-authoritative-financial-contracts.md), [ADR-0005](../adr/0005-financing-extension-admission-boundary.md), [ADR-0006](../adr/0006-versioned-financing-replay-contract.md), [ADR-0007](../adr/0007-versioned-fixed-monthly-financing-fee.md), [ADR-0008](../adr/0008-centavo-safe-financing-settlement.md), [ADR-0009](../adr/0009-explicit-consortium-scenarios-and-replay.md)
 > Related governance: [reference-case governance](reference-case-governance.md)
 > Related issues: #5 (M0), #47 (consortium v1)
 

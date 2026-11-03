@@ -90,6 +90,14 @@ existing governance contract; this version is a synthetic contract reference.
 
 - No HTTP, persistence, signing, comparator, frontend or new dependency.
 - No new mechanical review-plan gate or planning report artifact.
+- The approved M3 delivery budget is 13 changed files and 22 new public Python
+  names: 16 module-level function/class definitions, five constants and the
+  `ConsortiumScenarioKind` type alias. Count names defined in the five new
+  production modules without a leading underscore; imported names, methods
+  and dataclass fields are excluded. The other limits remain seven new Python
+  modules (five production, two tests), 14 classes, no new dependencies and no
+  changes to existing interfaces. The README correction and explicit name
+  accounting were admitted through a user-approved review amendment.
 
 ## Compatibility and migration
 
