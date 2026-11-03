@@ -7,6 +7,7 @@ import json
 from typing import cast
 
 from domain import comparison_v1 as _retained
+from domain import comparison_v2 as _monthly
 from domain.consortium import replay_v1 as _codec
 from domain.consortium.contracts import ConsortiumRequest
 from domain.financing.contracts import FinancingRequest
@@ -42,6 +43,40 @@ class ComparisonRequest:
     financing: FinancingRequest
     rent: RentPlusInvestmentRequest
     consortium: ConsortiumRequest
+
+
+@dataclass(frozen=True, slots=True)
+class ResourceComponentInput:
+    component_id: str
+    amount: str
+    classification: str
+    source_reference: str
+    source_as_of: str
+    assumption_reference: str | None
+
+
+@dataclass(frozen=True, slots=True)
+class ResourceMonthInput:
+    month: int
+    income_components: tuple[ResourceComponentInput, ...]
+    external_expenses: tuple[ResourceComponentInput, ...]
+
+
+@dataclass(frozen=True, slots=True)
+class CommonMonthlyResourcesInput:
+    income_basis: str
+    expense_scope: str
+    months: tuple[ResourceMonthInput, ...]
+
+
+@dataclass(frozen=True, slots=True)
+class ComparisonRequestV2:
+    shared: SharedComparisonInput
+    constraints: ComparisonConstraints
+    financing: FinancingRequest
+    rent: RentPlusInvestmentRequest
+    consortium: ConsortiumRequest
+    monthly_resources: CommonMonthlyResourcesInput
 
 
 @dataclass(frozen=True, slots=True)
@@ -190,9 +225,12 @@ def calculate_comparison_v1(
 def replay_comparison(envelope: ComparisonSimulationEnvelope) -> ComparisonResult | DomainFailure:
     """Reexecute the retained evaluator, never return a stored-outcome fallback."""
     try:
-        if (envelope.contract_schema_version, envelope.engine_version, envelope.ruleset_version) != (
-            _retained.CONTRACT_SCHEMA_VERSION, _retained.ENGINE_VERSION, _retained.RULESET_VERSION,
-        ):
+        versions = (envelope.contract_schema_version, envelope.engine_version, envelope.ruleset_version)
+        if versions == (_retained.CONTRACT_SCHEMA_VERSION, _retained.ENGINE_VERSION, _retained.RULESET_VERSION):
+            evaluator = _retained.evaluate
+        elif versions == (_monthly.CONTRACT_SCHEMA_VERSION, _monthly.ENGINE_VERSION, _monthly.RULESET_VERSION):
+            evaluator = _monthly.evaluate
+        else:
             raise ValueError("comparison historical handler unavailable")
         envelope.__post_init__()
         bound = _codec.parse_canonical_object(envelope.raw_request_jcs)
@@ -203,10 +241,37 @@ def replay_comparison(envelope: ComparisonSimulationEnvelope) -> ComparisonResul
         if bound.get("metadata") != metadata:
             raise ValueError("comparison metadata differs from bound request")
         _codec.parse_canonical_object(envelope.sealed_outcome_jcs)
-        if _retained.evaluate(envelope.raw_request_jcs) != envelope.sealed_outcome_jcs:
+        if evaluator(envelope.raw_request_jcs) != envelope.sealed_outcome_jcs:
             raise ValueError("comparison outcome differs on reexecution")
         return _decode(envelope)
     except Exception:
         # Verification failure is typed even for unexpected retained execution
         # errors. Creation deliberately does not catch these exceptions.
         return DomainFailure("incompatible_contract_version", "historical comparison equivalence cannot be proven")
+
+
+def create_comparison_v2_envelope(
+    *, raw_request_jcs: str, data_snapshot_id: str, calculated_at: str,
+) -> ComparisonSimulationEnvelope:
+    """Create explicit monthly-resource evidence without migrating older inputs."""
+    metadata = _retained.validate_metadata({
+        "data_snapshot_id": data_snapshot_id, "calculated_at": calculated_at,
+        "timezone": "America/Sao_Paulo",
+    })
+    raw = _codec.parse_canonical_object(raw_request_jcs)
+    bound = _codec.canonical_json({"metadata": metadata, "comparison": raw})
+    outcome = _monthly.evaluate(bound)
+    return ComparisonSimulationEnvelope(
+        _monthly.CONTRACT_SCHEMA_VERSION, _monthly.ENGINE_VERSION, _monthly.RULESET_VERSION,
+        data_snapshot_id, calculated_at, "America/Sao_Paulo", bound, outcome,
+    )
+
+
+def calculate_comparison_v2(
+    request: ComparisonRequestV2, *, data_snapshot_id: str, calculated_at: str,
+) -> ComparisonResult | DomainFailure:
+    """Create and decode the new simulation; no implicit upgrade of v1."""
+    raw = _codec.canonical_json(json.loads(json.dumps(asdict(request), allow_nan=False)))
+    return _decode(create_comparison_v2_envelope(
+        raw_request_jcs=raw, data_snapshot_id=data_snapshot_id, calculated_at=calculated_at,
+    ))

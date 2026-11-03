@@ -285,6 +285,19 @@ restriction, and future-purchase declarations return
 
 ## Time domains and versions
 
+The separately approved [common monthly resources contract](common-monthly-resources-v1.md)
+adds comparison v2 with one explicit 60-month profile, backend-derived signed
+resources, common origin evidence and funded child successors. Income is net
+of incident taxes/contributions before household/strategy flows. External
+expenses exclude strategy payments/transfers and already netted deductions;
+cash reservations are not expenses. All net resources enter each alternative.
+Resources precede obligations and mandatory declared rent contributions.
+Surplus stays cash; insufficient accumulated cash excludes without redemption,
+borrowing or contribution reduction. Housing metrics exclude external expenses.
+Historical closed-cash contracts below remain unchanged; these new semantics
+apply only under the complete new tuples documented in that contract and
+[ADR-0011](../adr/0011-common-monthly-resources-and-replay.md).
+
 The separately admitted [minimum comparison v1](minimum-comparison-v1.md)
 defines explicit in-memory simulation creation, shared-basis admission, mandatory
 constraints, exact-cent objective groups and retained aggregate/rent evidence.
@@ -372,8 +385,8 @@ The backend financial domain is authoritative. The frontend may collect inputs, 
 ## Deferred work
 
 - API wire schemas and OpenAPI generation.
-- Comparison beyond the admitted minimum synthetic v1 contract, including
-  common monthly resources before a family-use application.
+- Comparison beyond the admitted synthetic v1 and monthly-resource v2 contracts;
+  the family-use application/comparison API/simple UI needs a separate contract.
 - Consortium support beyond the synthetic v1 schedule/scenario boundary.
 - Property appreciation, inflation, monetary correction, taxes, extraordinary
   amortization, and fee/insurance variants beyond the explicitly admitted

@@ -30,8 +30,12 @@ adds explicit in-memory simulation creation and replay for SAC/Price v3, rent
 and one consortium scenario, mandatory constraints and exact-cent tied groups
 under a fixed net-worth objective. This closed-cash increment has no monthly
 resources; only rent invests. It does not complete M4 or validate household
-affordability. Common monthly resources require a separately approved increment
-before the family-use vertical slice.
+affordability. The separately versioned
+[common monthly resources increment](docs/specifications/common-monthly-resources-v1.md)
+adds explicit monthly income/expense composition, resources before obligations,
+cash-only feasibility and non-interest-bearing surplus. Funded successors retain
+all historical replay; only rent invests. Application/comparison API/simple UI
+delivery B requires its own contract and approval after this increment validates.
 
 Frontend, persistence, real-proposal consortium admission and eligibility rules
 remain unimplemented. The API does not expose replay or create simulation
