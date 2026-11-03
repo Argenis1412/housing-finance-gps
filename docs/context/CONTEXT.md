@@ -95,13 +95,16 @@ The configured tools and locked versions are owned by `pyproject.toml` and
   typed unsupported cases, schedule and ledger identities, deterministic and
   immutable results, historical versioned replay, and v3 centavo settlement.
 - Hypothesis properties run deterministically without an example database or
-  deadline. The exhaustive small-principal v3 matrix remains part of the
-  ordinary suite; no `slow` marker or separate matrix job is configured.
+  deadline. The exhaustive small-principal v3 matrix is marked `slow` and
+  excluded from default local runs. Unregistered test markers fail collection.
 - HTTP/OpenAPI tests validate v3 projection parity, deterministic responses,
   public errors, resource limits, the schema, and dependency boundaries.
-- GitHub Actions runs the complete suite once with branch instrumentation over
-  `domain/`, then enforces Coverage.py's combined total threshold of 95%.
-  `application/` and `api/` have tests but are outside that measured source scope.
+- GitHub Actions runs independent `validation` and `financing_matrix` jobs on
+  pushes to `main` and pull requests targeting `main`. The fast `validation`
+  job runs lint, types, and tests with branch instrumentation over `domain/`,
+  then enforces Coverage.py's combined total threshold of 95%. The matrix job
+  runs all `slow` tests without coverage instrumentation. `application/` and
+  `api/` have tests but are outside the measured source scope.
 
 Configured commands:
 
@@ -109,11 +112,14 @@ Configured commands:
 uv sync --frozen
 uv run ruff check .
 uv run pyright
-uv run coverage run --branch --source=domain -m pytest -q
+uv run coverage run --branch --source=domain -m pytest -q -m "not slow"
 uv run coverage report --fail-under=95
+uv run pytest -q -m slow
 ```
 
-For an uninstrumented run of the same suite, use `uv run pytest -q`.
+For an uninstrumented fast run, use `uv run pytest -q`. Run only the matrix
+with `uv run pytest -q -m slow`, or the complete suite with
+`uv run pytest -q -m ""`.
 
 OpenAPI-to-TypeScript generation, frontend tests, browser tests, dependency
 review, and secret scanning remain unconfigured. The broader selected baseline

@@ -92,10 +92,13 @@ work items; it does not change the accepted fixture contract.
 
 The locked Python 3.13 `uv` environment configures Ruff, strict Pyright over
 `domain/`, `application/`, `api/`, and `tests/`, pytest, deterministic Hypothesis
-properties, and Coverage.py. GitHub Actions synchronizes the lockfile, runs
-lint and type checking, then runs the complete synthetic-only suite with branch
-instrumentation over `domain/` and enforces a 95% total coverage threshold.
-Repository permissions are read-only.
+properties, and Coverage.py. GitHub Actions runs independent `validation` and
+`financing_matrix` jobs on pushes to `main` and pull requests targeting `main`.
+Both synchronize the locked development environment. The fast job runs lint,
+type checking, and tests with branch instrumentation over `domain/` and enforces
+a 95% combined total coverage threshold. The exhaustive v3 matrix is marked
+`slow` and runs without coverage instrumentation in its own job. Repository
+permissions are read-only.
 
 The bounded FastAPI v1 financing projection is implemented under the
 [accepted API contract](fastapi-v1-financing-projection.md). HTTP tests cover
