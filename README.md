@@ -34,27 +34,29 @@ affordability. The separately versioned
 [common monthly resources increment](docs/specifications/common-monthly-resources-v1.md)
 adds explicit monthly income/expense composition, resources before obligations,
 cash-only feasibility and non-interest-bearing surplus. Funded successors retain
-all historical replay; only rent invests. Application/comparison API/simple UI
-delivery B requires its own contract and approval after this increment validates.
+all historical replay; only rent invests.
 
-Frontend, persistence, real-proposal consortium admission and eligibility rules
-remain unimplemented. The API does not expose replay or create simulation
-results. Real financial data remains outside source control. Dependency
-review remains deferred.
+The [local comparison application](docs/specifications/comparison-application-api-ui-v1.md)
+adds explicit transient v2 simulation creation and a Next.js entry/review/result
+flow. It collects complete synthetic monthly declarations and displays backend
+resources, exclusions, tied groups, metrics and limitations. Inputs and results
+are memory-only. Persistence, real-proposal admission, eligibility expansion and
+HTTP replay remain unimplemented. Real financial data remains outside source
+control. This delivery does not complete M4 or the MVP.
 
 See [current context](docs/context/CONTEXT.md) for the exact active priority.
 
 ## Architecture
 
 - **Frontend:** Next.js and TypeScript, deployed independently.
-- **API:** FastAPI with the implemented typed v1 financing projection.
+- **API:** FastAPI with separate v1 financing projection and transient comparison creation.
 - **Domain:** pure Python financial calculations without external calls.
 - **Persistence:** SQLite for the private MVP, behind migrations.
 - **Explanation:** deterministic templates first; optional grounded LLM
   explanation later.
 
-The frontend never owns authoritative financial formulas.
-The frontend, persistence, and explanation layers remain planned.
+The frontend never owns authoritative financial formulas. Deterministic status
+and exclusion text uses backend output; persistence and optional AI remain planned.
 
 ## Documentation
 
@@ -119,6 +121,45 @@ and the exhaustive matrix runs without coverage instrumentation.
 The configured CI commands, including branch instrumentation and the 95%
 total coverage gate over `domain/`, are recorded in
 [QA status](docs/context/CONTEXT.md#qa-status).
+
+## Local comparison UI
+
+Use only synthetic data. Start these commands in separate terminals:
+
+```text
+uv sync --frozen
+uv run uvicorn api.main:app --host 127.0.0.1 --port 8000 --reload --no-access-log
+```
+
+```text
+cd web
+npm ci
+npm run dev
+```
+
+Open http://127.0.0.1:3000. The same-origin rewrite sends comparison requests
+only to the local API on port 8000. API documentation is at
+http://127.0.0.1:8000/docs. Refreshing the page loses all inputs and results.
+
+The UI starts blank. Declare every amount, including zeros; use explicit bulk
+copies for the 60 resource months and consortium rows, confirm support/scope,
+review the declarations and then compare. Waiting costs must match the common
+rent projection; this increment does not calculate those inputs for the user.
+
+With Node from `web/.nvmrc`, run frontend checks from `web/`:
+
+```text
+npm run contract:check
+npm run lint
+npm run typecheck
+npm run build
+npx playwright install chromium
+npm test
+```
+
+Regenerate the offline OpenAPI consumer with `npm run contract:generate` after
+an approved API schema change. Browser tests use synthetic inputs, the API on
+8000 and the production frontend on 3100, leaving a user dev server on 3000 alone.
 
 ## Privacy and limitations
 

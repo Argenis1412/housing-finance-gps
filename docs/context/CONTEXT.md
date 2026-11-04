@@ -26,23 +26,28 @@
 - **API boundary:** A bounded FastAPI v1 endpoint exposes ephemeral SAC or
   Price v3 calculation projections under the
   [financing projection contract](../specifications/fastapi-v1-financing-projection.md).
-  It does not create simulation results or expose replay, persistence, or a
-  frontend. Historical replay remains a domain capability.
+  A separate
+  [comparison creation contract](../specifications/comparison-application-api-ui-v1.md)
+  exposes transient v2 simulations with typed presentation results and a local
+  Next.js entry/review/result flow. No persistence or HTTP replay is exposed.
+  Historical replay remains a domain capability.
 - **Validation:** A locked Python 3.13 development environment, Ruff, strict
   Pyright, pytest, deterministic Hypothesis properties, HTTP/OpenAPI contract
   tests, and a domain coverage gate are configured in GitHub Actions.
-- **Remaining boundaries:** Family-use application/comparison API, persistence, Next.js
-  frontend, real-proposal consortium admission, eligibility rules and comparison
+- **Remaining boundaries:** Persistence, remote private operation,
+  real-proposal consortium admission, eligibility rules and comparison
   beyond the admitted synthetic contracts remain unimplemented.
   Only rent invests; this increment does not establish household affordability
   or complete M4. Insurance and nonzero
   financing indexation remain unsupported. This state summary does not declare
   the financing milestone complete or validate the private reference case.
-- **Current priority:** Validate and review the approved common-monthly-resources
-  Track C increment (#51) before separately contracting B, the family-use
-  application/API/simple UI. B, sensitivity, break-even and polish are not
-  authorized by this domain delivery. The recorded periodic audit remains
-  current; #50 is behavioral merge 1 of the new five-PR cycle.
+- **Current priority:** Review the approved local comparison application/API/UI
+  Track C delivery (#53) before any ready/merge decision. Independent code
+  review has closed; configured final QA protects the delivery. No persistence,
+  sensitivity, break-even, optimization, polish or private-case validation is
+  authorized. The periodic audit remains recorded; #50 and #52 are behavioral
+  merges 1 and 2 of the current five-PR cycle.
+
 
 ## Approved direction
 
@@ -71,7 +76,9 @@ The canonical scope and acceptance criteria are in the
 | `docs/context/` | Current state, history, open questions, and discoveries. |
 | `docs/adr/` | Accepted architecture decisions and their rationale. |
 | `application/financing_projection.py` | Framework-independent use case selecting the fixed v3 financing projection. |
-| `api/` | FastAPI v1 projection schemas, HTTP resource limits, public error mapping, and route. |
+| `application/comparison_simulation.py` | Explicit transient v2 creation and sealed presentation projection with injected metadata. |
+| `api/` | Separate financing projection and comparison creation schemas, resource admission and safe error families. |
+| `web/` | Local Next.js/TypeScript declaration/review/result UI, generated consumer types and synthetic browser tests. |
 | `domain/values.py` | Immutable BRL money and rate values plus canonical runtime failures for the financing domain. |
 | `domain/ledger.py` | Neutral common comparison ledger, derived accounting identities, and exact rational monetary posting. |
 | `domain/financing/contracts.py` | Shared financing request, normalization, canonical failures, and immutable contractual schedule rows. |
@@ -139,8 +146,13 @@ For an uninstrumented fast run, use `uv run pytest -q`. Run only the matrix
 with `uv run pytest -q -m slow`, or the complete suite with
 `uv run pytest -q -m ""`.
 
-OpenAPI-to-TypeScript generation, frontend tests, browser tests, dependency
-review, and secret scanning remain unconfigured. The broader selected baseline
+OpenAPI-to-TypeScript generation, frontend lint/types/build and synthetic
+Chromium browser tests are configured under `web/` and the additional `web` CI
+job. Run `npm ci`, `npm run contract:check`, `npm run lint`,
+`npm run typecheck`, `npm run build` and `npm test` there; install Chromium with
+`npx playwright install chromium` first. The existing backend job commands and
+95% domain coverage gate remain unchanged. Dependency review and secret scanning
+remain unconfigured. The broader selected baseline
 is recorded in the
 [synthetic regression reference and QA baseline](../specifications/milestone-0-synthetic-reference-and-qa.md).
 Concrete deferred QA findings are recorded in [discoveries.md](discoveries.md).

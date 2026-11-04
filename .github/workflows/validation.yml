@@ -49,3 +49,41 @@ jobs:
         run: uv sync --frozen
       - name: Run exhaustive financing matrix without coverage
         run: uv run pytest -q -m slow
+
+  web:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - name: Set up Python
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
+        with:
+          python-version: "3.13"
+      - name: Set up uv
+        uses: astral-sh/setup-uv@c771a70e6277c0a99b617c7a806ffedaca235ff9 # v9.0.0
+      - name: Sync locked development environment
+        run: uv sync --frozen
+      - name: Set up Node
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version-file: web/.nvmrc
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+      - name: Install locked frontend dependencies
+        run: npm ci --prefix web
+      - name: Verify generated consumer contract
+        working-directory: web
+        run: npm run contract:check
+      - name: Frontend lint and types
+        working-directory: web
+        run: npm run lint && npm run typecheck
+      - name: Build local application
+        working-directory: web
+        run: npm run build
+      - name: Install test browser
+        working-directory: web
+        run: npx playwright install --with-deps chromium
+      - name: Run synthetic contract and browser tests
+        working-directory: web
+        run: npm test

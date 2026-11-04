@@ -193,13 +193,14 @@ def test_openapi_is_valid_and_describes_only_the_v1_projection_contract() -> Non
     document = app.openapi()
 
     validate(document)
-    assert set(document["paths"]) == {"/api/v1/financing/calculations"}
+    assert set(document["paths"]) == {"/api/v1/financing/calculations", "/api/v1/comparison/simulations"}
     operation = document["paths"]["/api/v1/financing/calculations"]["post"]
     assert set(operation["responses"]) >= {"200", "409", "413", "422", "500"}
     schema = document["components"]["schemas"]["FinancingInputV1"]
     assert "data_snapshot_id" not in schema["properties"]
-    assert "data_snapshot_id" not in json.dumps(document)
-    assert document["info"]["version"] == "1.0.0"
+    projection = document["components"]["schemas"]["CalculationProjectionV1"]
+    assert "data_snapshot_id" not in json.dumps(projection)
+    assert document["info"]["version"] == "1.1.0"
 
 
 def test_domain_has_no_framework_or_application_imports() -> None:

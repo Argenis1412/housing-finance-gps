@@ -6,6 +6,7 @@ from fastapi.responses import JSONResponse
 
 from application.financing_projection import ApplicationFailure
 from api.schemas.financing_v1 import ApiErrorV1
+from api.schemas.comparison_v1 import ComparisonApiErrorV1
 
 
 _MESSAGES = {
@@ -17,6 +18,7 @@ _MESSAGES = {
     "incompatible_contract_version": "A versão contratual informada é incompatível.",
     "request_too_large": "A solicitação excede o limite de tamanho da API.",
     "internal_error": "Ocorreu um erro interno ao processar a solicitação.",
+    "response_too_large": "O resultado excede o limite de tamanho. Reduza as declarações e revise novamente.",
 }
 
 
@@ -40,3 +42,13 @@ def error_response(status_code: int, code: str) -> JSONResponse:
     """Render the versioned safe public error schema."""
     payload = ApiErrorV1(code=code, message_pt_br=_MESSAGES[code])
     return JSONResponse(status_code=status_code, content=payload.model_dump(mode="json"))
+
+
+def public_message(code: str) -> str:
+    """Use only fixed messages, never retained diagnostic text."""
+    return _MESSAGES.get(code, _MESSAGES["internal_error"])
+
+
+def comparison_error_response(status_code: int, code: str) -> JSONResponse:
+    payload = ComparisonApiErrorV1(code=code, message_pt_br=public_message(code))
+    return JSONResponse(status_code=status_code, content=payload.model_dump(mode="json"), headers={"Cache-Control": "no-store"})
