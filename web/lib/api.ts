@@ -89,6 +89,17 @@ export function validateResult(value: unknown): Result {
   return value as Result;
 }
 const messages: Record<string, string> = {
+  simulation_not_found: "A comparação salva não foi encontrada.",
+  simulation_deleted: "Esta comparação foi excluída. A tentativa não irá recriá-la.",
+  operation_id_conflict: "Esta operação já foi usada com outras declarações.",
+  incompatible_contract_version: "A versão do resultado salvo não é suportada.",
+  incompatible_storage_version: "A versão do armazenamento não é suportada.",
+  stored_simulation_corrupt: "A integridade do registro salvo não pôde ser confirmada.",
+  evidence_too_large: "A evidência completa excede o limite de armazenamento.",
+  storage_not_configured: "Configure o banco local para usar comparações salvas.",
+  storage_not_initialized: "Inicialize o banco local com o comando de migração.",
+  storage_busy: "O banco local está ocupado. Tente novamente.",
+  storage_unavailable: "O banco local está indisponível. Verifique sua configuração.",
   invalid_input: "Os dados de comparação são inválidos. Revise a base comum, o perfil e os custos de espera.",
   unsupported_rate_convention: "A convenção de taxa não é suportada. Revise as taxas declaradas.",
   unsupported_rule: "A regra solicitada não é suportada neste modelo sintético.",
@@ -106,6 +117,11 @@ export async function compare(request: Request, signal: AbortSignal): Promise<Re
   let response: Response;
   try {response = await fetch("/api/v1/comparison/simulations", {method: "POST", headers: {"Content-Type": "application/json"}, body: JSON.stringify(request), cache: "no-store", signal});}
   catch {if (signal.aborted) throw signal.reason; throw new Error("network_error");}
+  return validateResult(await readResponse(response));
+}
+
+/** Bounded transport parsing shared by the additive saved operations. */
+export async function readResponse(response: Response): Promise<unknown> {
   const reader = response.body?.getReader();
   check(reader);
   let size = 0; const chunks: Uint8Array[] = [];
@@ -123,5 +139,5 @@ export async function compare(request: Request, signal: AbortSignal): Promise<Re
     check(object(value) && value.api_version === "v1" && typeof value.code === "string");
     throw new Error(Object.hasOwn(messages, value.code) ? value.code : "invalid_response");
   }
-  return validateResult(value);
+  return value;
 }

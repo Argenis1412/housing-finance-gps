@@ -48,6 +48,7 @@ Use [0000-template.md](0000-template.md). Every accepted ADR states:
 | [ADR-0010](0010-minimum-comparison-and-simulation-evidence.md) | Accepted | Bind minimum synthetic comparison to explicit retained in-memory simulation evidence. |
 | [ADR-0011](0011-common-monthly-resources-and-replay.md) | Accepted | Bind explicit common monthly resources to funded successor execution and retained aggregate replay. |
 | [ADR-0012](0012-local-comparison-application-boundary.md) | Accepted | Expose transient comparison v2 through a local application/API and explicit review UI. |
+| [ADR-0013](0013-local-comparison-persistence.md) | Accepted | Preserve complete synthetic comparison evidence in local SQLite with explicit save/read/delete and migrations. |
 
 Do not create speculative ADRs merely to fill the initial list. Write each
 record when its decision is required for an approved work item.

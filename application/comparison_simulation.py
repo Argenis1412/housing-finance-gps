@@ -10,7 +10,7 @@ import re
 from typing import cast
 from uuid import uuid4
 
-from domain.comparison import create_comparison_v2_envelope
+from domain.comparison import ComparisonSimulationEnvelope, create_comparison_v2_envelope
 from domain.consortium.replay_v1 import canonical_json
 
 
@@ -47,6 +47,14 @@ def create_comparison_simulation(
         data_snapshot_id=snapshot_factory(),
         calculated_at=clock(),
     )
+    return project_comparison_v2_envelope(envelope)
+
+
+def project_comparison_v2_envelope(
+    envelope: ComparisonSimulationEnvelope,
+) -> dict[str, object] | ComparisonApplicationFailure:
+    """Copy the pinned v2 presentation from sealed evidence, without execution."""
+    comparison = _object(json.loads(envelope.raw_request_jcs))["comparison"]
     outcome = _object(json.loads(envelope.sealed_outcome_jcs))
     if outcome["kind"] == "failure":
         return ComparisonApplicationFailure(cast(str, outcome["code"]))

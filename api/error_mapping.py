@@ -10,6 +10,16 @@ from api.schemas.comparison_v1 import ComparisonApiErrorV1
 
 
 _MESSAGES = {
+    "simulation_not_found": "A comparação salva não foi encontrada.",
+    "simulation_deleted": "Esta comparação foi excluída e não será recriada por uma nova tentativa.",
+    "operation_id_conflict": "Esta operação já foi usada com outras declarações.",
+    "incompatible_storage_version": "A versão do armazenamento não é suportada.",
+    "stored_simulation_corrupt": "A integridade do registro salvo não pôde ser confirmada.",
+    "evidence_too_large": "A evidência completa excede o limite de armazenamento.",
+    "storage_not_configured": "Configure o banco local para usar comparações salvas.",
+    "storage_not_initialized": "Inicialize o banco local com o comando de migração.",
+    "storage_busy": "O banco local está ocupado. Tente novamente.",
+    "storage_unavailable": "O banco local está indisponível. Verifique sua configuração e tente novamente.",
     "invalid_input": "Os dados informados são inválidos.",
     "unsupported_rate_convention": "A convenção de taxa informada não é suportada.",
     "unsupported_rule": "A regra solicitada não é suportada.",

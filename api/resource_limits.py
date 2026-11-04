@@ -14,10 +14,15 @@ MAX_RESPONSE_BYTES = 262_144
 COMPARISON_MAX_REQUEST_BYTES = 1_048_576
 COMPARISON_MAX_RESPONSE_BYTES = 4_194_304
 COMPARISON_PATH = "/api/v1/comparison/simulations"
+SAVED_COMPARISON_PATH = "/api/v1/comparison/saved-simulations"
 
 
 def is_comparison_request(method: str, path: str) -> bool:
     return method == "POST" and path in {COMPARISON_PATH, COMPARISON_PATH + "/"}
+
+
+def is_comparison_operation(method: str, path: str) -> bool:
+    return is_comparison_request(method, path) or (method in {"POST", "GET", "DELETE"} and (path.rstrip("/") == SAVED_COMPARISON_PATH or path.startswith(SAVED_COMPARISON_PATH + "/")))
 
 
 def _pairs(pairs: list[tuple[str, object]]) -> dict[str, object]:
@@ -77,7 +82,7 @@ class RequestBodyLimitMiddleware:
 
         chunks: list[bytes] = []
         received_bytes = 0
-        comparison = is_comparison_request(scope["method"], scope["path"])
+        comparison = is_comparison_operation(scope["method"], scope["path"])
         respond = comparison_error_response if comparison else error_response
         limit = COMPARISON_MAX_REQUEST_BYTES if comparison else MAX_REQUEST_BYTES
         while True:
@@ -94,7 +99,7 @@ class RequestBodyLimitMiddleware:
             if not message.get("more_body", False):
                 break
 
-        if comparison:
+        if comparison and scope["method"] == "POST":
             try:
                 _admit_comparison_json(b"".join(chunks))
             except (ValueError, UnicodeError, RecursionError):

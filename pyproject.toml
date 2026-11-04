@@ -20,7 +20,7 @@ dev = [
 ]
 
 [tool.pyright]
-include = ["domain", "application", "api", "tests"]
+include = ["domain", "application", "api", "infrastructure", "scripts/migrate_comparisons.py", "tests"]
 pythonVersion = "3.13"
 typeCheckingMode = "strict"
 
