@@ -1,6 +1,6 @@
 # Housing Finance GPS — Current Context
 
-> Last updated: November 3, 2026
+> Last updated: November 4, 2026
 > Read [AGENTS.md](../../AGENTS.md) before this document. This file describes
 > current repository reality, not future intent and not implementation history.
 
@@ -29,25 +29,29 @@
   A separate
   [comparison creation contract](../specifications/comparison-application-api-ui-v1.md)
   exposes transient v2 simulations with typed presentation results and a local
-  Next.js entry/review/result flow. No persistence or HTTP replay is exposed.
+  Next.js entry/review/result flow. A separate explicit local SQLite boundary
+  saves complete v2 evidence, lists, reopens readonly results without execution
+  and deletes individual records under the
+  [persistence contract](../specifications/local-comparison-persistence-v1.md).
+  No HTTP replay is exposed.
   Historical replay remains a domain capability.
 - **Validation:** A locked Python 3.13 development environment, Ruff, strict
   Pyright, pytest, deterministic Hypothesis properties, HTTP/OpenAPI contract
   tests, and a domain coverage gate are configured in GitHub Actions.
-- **Remaining boundaries:** Persistence, remote private operation,
+- **Remaining boundaries:** Remote private operation,
   real-proposal consortium admission, eligibility rules and comparison
   beyond the admitted synthetic contracts remain unimplemented.
   Only rent invests; this increment does not establish household affordability
   or complete M4. Insurance and nonzero
   financing indexation remain unsupported. This state summary does not declare
   the financing milestone complete or validate the private reference case.
-- **Current priority:** Review the approved local comparison application/API/UI
-  Track C delivery (#53) before any ready/merge decision. Independent code
-  review has closed; configured final QA protects the delivery. No persistence,
-  sensitivity, break-even, optimization, polish or private-case validation is
-  authorized. The periodic audit remains recorded; #50 and #52 are behavioral
-  merges 1 and 2 of the current five-PR cycle.
-
+- **Current priority:** Review the approved local SQLite persistence delivery
+  (#55) before any ready/merge decision. Its independent diff review has closed;
+  configured full QA protects delivery. B was integrated by #54 and its review
+  is complete. The periodic audit remains current: #50, #52 and #54 are
+  behavioral merges 1, 2 and 3 of the current five-PR cycle. Persistence is
+  synthetic and local; sensitivity, break-even, optimization, polish and
+  private-case validation remain deferred.
 
 ## Approved direction
 
@@ -56,7 +60,7 @@
 - FastAPI exposes typed and versioned JSON contracts.
 - Next.js and TypeScript provide a polished, accessible, independently
   deployable frontend.
-- SQLite is the planned private-MVP persistence layer.
+- SQLite stores explicitly saved synthetic comparisons through versioned local migrations.
 - The reference case is one real family decision held locally as private
   acceptance evidence; Git contains only redacted provenance and synthetic
   fixtures.
@@ -77,6 +81,7 @@ The canonical scope and acceptance criteria are in the
 | `docs/adr/` | Accepted architecture decisions and their rationale. |
 | `application/financing_projection.py` | Framework-independent use case selecting the fixed v3 financing projection. |
 | `application/comparison_simulation.py` | Explicit transient v2 creation and sealed presentation projection with injected metadata. |
+| `application/saved_comparisons.py` and `infrastructure/sqlite_comparisons.py` | Immutable evidence codec, transactional saved use cases, SQLite adapter and explicit migration. |
 | `api/` | Separate financing projection and comparison creation schemas, resource admission and safe error families. |
 | `web/` | Local Next.js/TypeScript declaration/review/result UI, generated consumer types and synthetic browser tests. |
 | `domain/values.py` | Immutable BRL money and rate values plus canonical runtime failures for the financing domain. |
@@ -113,9 +118,11 @@ those rules.
 The configured tools and locked versions are owned by `pyproject.toml` and
 `uv.lock`; the CI sequence is owned by `.github/workflows/validation.yml`.
 
+- The current synthetic validation baseline is 610 fast Python tests, four slow
+  tests and 34 frontend tests, with 98% combined domain coverage (95% gate).
 - Ruff checks Python lint rules. Automated formatting is not configured.
-- Pyright runs in strict mode over `domain/`, `application/`, `api/`, and
-  `tests/`.
+- Pyright runs in strict mode over `domain/`, `application/`, `api/`,
+  `infrastructure/`, the migration command and `tests/`.
 - The synthetic-only pytest suite covers independent financial checkpoints,
   typed unsupported cases, schedule and ledger identities, deterministic and
   immutable results, historical versioned replay, and v3 centavo settlement.

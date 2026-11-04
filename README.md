@@ -39,8 +39,10 @@ all historical replay; only rent invests.
 The [local comparison application](docs/specifications/comparison-application-api-ui-v1.md)
 adds explicit transient v2 simulation creation and a Next.js entry/review/result
 flow. It collects complete synthetic monthly declarations and displays backend
-resources, exclusions, tied groups, metrics and limitations. Inputs and results
-are memory-only. Persistence, real-proposal admission, eligibility expansion and
+resources, exclusions, tied groups, metrics and limitations. Transient inputs and results
+are memory-only. Explicit [local persistence](docs/specifications/local-comparison-persistence-v1.md)
+saves complete synthetic evidence and reopens historical results without calculation.
+Real-proposal admission, eligibility expansion and
 HTTP replay remain unimplemented. Real financial data remains outside source
 control. This delivery does not complete M4 or the MVP.
 
@@ -49,14 +51,14 @@ See [current context](docs/context/CONTEXT.md) for the exact active priority.
 ## Architecture
 
 - **Frontend:** Next.js and TypeScript, deployed independently.
-- **API:** FastAPI with separate v1 financing projection and transient comparison creation.
+- **API:** FastAPI with separate v1 financing projection, transient comparison creation and explicit saved-comparison operations.
 - **Domain:** pure Python financial calculations without external calls.
 - **Persistence:** SQLite for the private MVP, behind migrations.
 - **Explanation:** deterministic templates first; optional grounded LLM
   explanation later.
 
 The frontend never owns authoritative financial formulas. Deterministic status
-and exclusion text uses backend output; persistence and optional AI remain planned.
+and exclusion text uses backend output; explicit local persistence is available; optional AI remains planned.
 
 ## Documentation
 
@@ -139,7 +141,8 @@ npm run dev
 
 Open http://127.0.0.1:3000. The same-origin rewrite sends comparison requests
 only to the local API on port 8000. API documentation is at
-http://127.0.0.1:8000/docs. Refreshing the page loses all inputs and results.
+http://127.0.0.1:8000/docs. Refreshing loses declarations and transient results;
+explicitly saved comparisons remain in the configured local database.
 
 The UI starts blank. Declare every amount, including zeros; use explicit bulk
 copies for the 60 resource months and consortium rows, confirm support/scope,
@@ -166,3 +169,34 @@ an approved API schema change. Browser tests use synthetic inputs, the API on
 No directly identifying personal or financial data belongs in source
 control. The application is a private simulation and decision-support tool;
 it is not legal, tax, investment, credit, or regulated financial advice.
+
+## Explicit local synthetic persistence
+
+The review step also offers **Comparar e salvar**. It calculates once and
+stores the complete evidence; the existing transient compare action is unchanged.
+Use **Comparações salvas** to locate readonly results by UTC date and opaque ID,
+reopen after restart, or confirm individual deletion. Reopening does not calculate
+or verify by replay. Saving an already displayed transient result is unavailable.
+
+Select an absolute database path outside this checkout and initialize it explicitly
+before starting the backend, for example:
+
+```bash
+export HFGPS_DB_PATH="$HOME/.local/share/housing-finance-gps/synthetic.sqlite3"
+uv run python -m scripts.migrate_comparisons
+uv run uvicorn api.main:app --host 127.0.0.1 --port 8000 --reload --no-access-log
+```
+
+The server never creates/migrates a database. Without configuration, transient
+comparison still works and saved operations report their configuration state.
+Use synthetic data only. Retain the file until explicit deletion; deletion removes
+application evidence but cannot guarantee forensic erasure or erase external copies.
+Only a random operation-ID marker survives individual deletion to reject late retries.
+A timeout may occur after commit: consult saved results or repeat the same operation
+from the preserved review. Refresh does not automatically submit it again.
+
+The implementation uses standard-library SQLite, schema v1 and SHA-256 corruption
+checks, without authentication/private attestation or new replay interfaces. See the
+[persistence contract](docs/specifications/local-comparison-persistence-v1.md) and
+[ADR-0013](docs/adr/0013-local-comparison-persistence.md) for limits and compatibility.
+It does not complete M4 or the MVP.

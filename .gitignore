@@ -23,7 +23,9 @@ web/next-env.d.ts
 
 # Local databases and generated artifacts
 *.sqlite3
+*.sqlite3-*
 *.db
+*.db-*
 .coverage
 coverage/
 dist/

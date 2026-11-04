@@ -90,3 +90,12 @@ def test_unexpected_domain_execution_error_propagates_to_http_boundary(monkeypat
     monkeypatch.setattr(application, "create_comparison_v2_envelope", broken)
     with pytest.raises(RuntimeError):
         create()
+
+
+def test_extracted_projection_matches_creation_without_evaluating(monkeypatch: pytest.MonkeyPatch) -> None:
+    evidence = envelope()
+    expected = application.project_comparison_v2_envelope(evidence)
+    def forbidden(**_: object) -> object:
+        raise AssertionError("projection executed the factory")
+    monkeypatch.setattr(application, "create_comparison_v2_envelope", forbidden)
+    assert application.project_comparison_v2_envelope(evidence) == expected

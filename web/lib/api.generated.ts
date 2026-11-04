@@ -1,6 +1,42 @@
 export type ClosedJsonValue = { [key: string]: ClosedJsonValue } | ClosedJsonValue[] | string | number | boolean | null;
 
 export interface paths {
+    "/api/v1/comparison/saved-simulations": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List unverified saved-comparison index metadata */
+        get: operations["list_saved_api_v1_comparison_saved_simulations_get"];
+        put?: never;
+        /** Compare once and save complete local synthetic evidence */
+        post: operations["create_saved_api_v1_comparison_saved_simulations_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/comparison/saved-simulations/{simulation_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Read stored historical output without calculation or replay */
+        get: operations["read_saved_api_v1_comparison_saved_simulations__simulation_id__get"];
+        put?: never;
+        post?: never;
+        /** Delete evidence while retaining its opaque operation ID */
+        delete: operations["delete_saved_api_v1_comparison_saved_simulations__simulation_id__delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/comparison/simulations": {
         parameters: {
             query?: never;
@@ -448,6 +484,7 @@ export interface components {
             /** Months */
             months: components["schemas"]["NormalizedResourceMonthV1"][];
         };
+        OperationId: string;
         /** ResourceComponentV1 */
         ResourceComponentV1: {
             amount: components["schemas"]["MoneyOutput"];
@@ -465,6 +502,51 @@ export interface components {
             /** Source Reference */
             source_reference: string;
         };
+        /** SavedComparisonCreationV1 */
+        SavedComparisonCreationV1: {
+            comparison: components["schemas"]["ComparisonInputsV1-Input"];
+            operation_id: components["schemas"]["OperationId"];
+        };
+        /** SavedComparisonListV1 */
+        SavedComparisonListV1: {
+            /**
+             * Api Version
+             * @constant
+             */
+            api_version: "v1";
+            /** Items */
+            items: components["schemas"]["SavedComparisonSummaryV1"][];
+            /**
+             * Kind
+             * @constant
+             */
+            kind: "saved_comparison_list";
+            /** Next Offset */
+            next_offset: number | null;
+        };
+        /** SavedComparisonSummaryV1 */
+        SavedComparisonSummaryV1: {
+            /** Saved At */
+            saved_at: string;
+            simulation_id: components["schemas"]["OperationId"];
+        };
+        /** SavedComparisonV1 */
+        SavedComparisonV1: {
+            /**
+             * Api Version
+             * @constant
+             */
+            api_version: "v1";
+            /**
+             * Kind
+             * @constant
+             */
+            kind: "saved_comparison";
+            result: components["schemas"]["ComparisonSimulationResultV1"];
+            /** Saved At */
+            saved_at: string;
+            simulation_id: components["schemas"]["OperationId"];
+        };
         /** @enum {string} */
         Strategy: "sac" | "price" | "rent" | "consortium";
     };
@@ -476,6 +558,356 @@ export interface components {
 }
 export type $defs = Record<string, never>;
 export interface operations {
+    list_saved_api_v1_comparison_saved_simulations_get: {
+        parameters: {
+            query?: {
+                limit?: number;
+                offset?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SavedComparisonListV1"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ComparisonApiErrorV1"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ComparisonApiErrorV1"];
+                };
+            };
+            /** @description Gone */
+            410: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ComparisonApiErrorV1"];
+                };
+            };
+            /** @description Content Too Large */
+            413: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ComparisonApiErrorV1"];
+                };
+            };
+            /** @description Unprocessable Content */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ComparisonApiErrorV1"];
+                };
+            };
+            /** @description Internal Server Error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ComparisonApiErrorV1"];
+                };
+            };
+            /** @description Service Unavailable */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ComparisonApiErrorV1"];
+                };
+            };
+        };
+    };
+    create_saved_api_v1_comparison_saved_simulations_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SavedComparisonCreationV1"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SavedComparisonV1"];
+                };
+            };
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SavedComparisonV1"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ComparisonApiErrorV1"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ComparisonApiErrorV1"];
+                };
+            };
+            /** @description Gone */
+            410: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ComparisonApiErrorV1"];
+                };
+            };
+            /** @description Content Too Large */
+            413: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ComparisonApiErrorV1"];
+                };
+            };
+            /** @description Unprocessable Content */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ComparisonApiErrorV1"];
+                };
+            };
+            /** @description Internal Server Error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ComparisonApiErrorV1"];
+                };
+            };
+            /** @description Service Unavailable */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ComparisonApiErrorV1"];
+                };
+            };
+        };
+    };
+    read_saved_api_v1_comparison_saved_simulations__simulation_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                simulation_id: components["schemas"]["OperationId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SavedComparisonV1"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ComparisonApiErrorV1"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ComparisonApiErrorV1"];
+                };
+            };
+            /** @description Gone */
+            410: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ComparisonApiErrorV1"];
+                };
+            };
+            /** @description Content Too Large */
+            413: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ComparisonApiErrorV1"];
+                };
+            };
+            /** @description Unprocessable Content */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ComparisonApiErrorV1"];
+                };
+            };
+            /** @description Internal Server Error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ComparisonApiErrorV1"];
+                };
+            };
+            /** @description Service Unavailable */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ComparisonApiErrorV1"];
+                };
+            };
+        };
+    };
+    delete_saved_api_v1_comparison_saved_simulations__simulation_id__delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                simulation_id: components["schemas"]["OperationId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ComparisonApiErrorV1"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ComparisonApiErrorV1"];
+                };
+            };
+            /** @description Gone */
+            410: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ComparisonApiErrorV1"];
+                };
+            };
+            /** @description Content Too Large */
+            413: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ComparisonApiErrorV1"];
+                };
+            };
+            /** @description Unprocessable Content */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ComparisonApiErrorV1"];
+                };
+            };
+            /** @description Internal Server Error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ComparisonApiErrorV1"];
+                };
+            };
+            /** @description Service Unavailable */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ComparisonApiErrorV1"];
+                };
+            };
+        };
+    };
     create_simulation_api_v1_comparison_simulations_post: {
         parameters: {
             query?: never;
