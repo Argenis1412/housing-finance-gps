@@ -34,8 +34,7 @@ affordability. The separately versioned
 [common monthly resources increment](docs/specifications/common-monthly-resources-v1.md)
 adds explicit monthly income/expense composition, resources before obligations,
 cash-only feasibility and non-interest-bearing surplus. Funded successors retain
-all historical replay; only rent invests. Application/comparison API/simple UI
-delivery B requires its own contract and approval after this increment validates.
+all historical replay; only rent invests.
 
 The [local comparison application](docs/specifications/comparison-application-api-ui-v1.md)
 adds explicit transient v2 simulation creation and a Next.js entry/review/result

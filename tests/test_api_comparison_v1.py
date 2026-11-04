@@ -112,6 +112,29 @@ def test_versioned_errors_include_validation_body_limit_and_response_limit(monke
     assert response.status_code == 422 and response.json()["code"] == "response_too_large"
 
 
+def test_trailing_slash_uses_comparison_admission_before_redirect() -> None:
+    client = TestClient(app)
+    response = client.post(PATH + "/", content=b" " * 8_193 + json.dumps({"comparison": raw_request()}).encode(), headers={"Content-Type": "application/json"})
+    assert response.status_code == 200
+    response = client.post(PATH + "/", content=b" " * (resource_limits.COMPARISON_MAX_REQUEST_BYTES + 1))
+    assert response.status_code == 413
+    assert response.json()["api_version"] == "v1"
+    assert response.json()["code"] == "request_too_large"
+    assert response.headers["cache-control"] == "no-store"
+
+
+@pytest.mark.parametrize("container", ["array", "object"])
+@pytest.mark.parametrize("leaf", [b"", b"0"])
+def test_json_container_depth_boundary_includes_empty_containers(container: str, leaf: bytes) -> None:
+    def nested(depth: int) -> bytes:
+        if container == "array":
+            return b"[" * depth + leaf + b"]" * depth
+        return b'{"x":' * (depth - 1) + (b'{"x":0}' if leaf else b"{}") + b"}" * (depth - 1)
+    resource_limits._admit_comparison_json(nested(64))  # pyright: ignore[reportPrivateUsage]
+    with pytest.raises(ValueError, match="JSON depth"):
+        resource_limits._admit_comparison_json(nested(65))  # pyright: ignore[reportPrivateUsage]
+
+
 @pytest.mark.parametrize("boundary", ["middleware", "route"])
 def test_unexpected_errors_are_safe_and_not_logged(boundary: str, monkeypatch: pytest.MonkeyPatch, caplog: pytest.LogCaptureFixture) -> None:
     def broken(*_: object, **__: object) -> object:

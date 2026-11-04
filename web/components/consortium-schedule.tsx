@@ -19,6 +19,8 @@ export default function ConsortiumSchedule({form, change}: {form: FormState; cha
   }
   function confirm() {
     if (!preview) return;
+    const length = preview.kind === "schedule" ? form.schedule.length : form.waiting.length;
+    if (preview.to > length) {setPreview(null); setError("O prazo mudou. Revise o intervalo e a cópia novamente."); return;}
     if (preview.kind === "schedule") change({...form, schedule: form.schedule.map(r => r.month < preview.from || r.month > preview.to ? r : {...r, ...preview.amounts} as ScheduleRow)});
     else change({...form, waiting: form.waiting.map(r => r.month < preview.from || r.month > preview.to ? r : {...r, amount: preview.amounts.amount})});
     setPreview(null);

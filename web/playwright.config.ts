@@ -8,7 +8,7 @@ export default defineConfig({
     {name: "mobile", use: {...devices["Desktop Chrome"], viewport: {width: 360, height: 800}}},
   ],
   webServer: [
-    {command: "uv run --directory .. uvicorn api.main:app --host 127.0.0.1 --port 8000 --no-access-log", url: "http://127.0.0.1:8000/openapi.json", reuseExistingServer: !process.env.CI, timeout: 30_000},
-    {command: "npm run start -- --port 3100", url: "http://127.0.0.1:3100", reuseExistingServer: !process.env.CI, timeout: 60_000},
+    {command: "uv run --directory .. uvicorn api.main:app --host 127.0.0.1 --port 8000 --no-access-log", url: "http://127.0.0.1:8000/openapi.json", reuseExistingServer: false, timeout: 30_000},
+    {command: "npm run start -- --port 3100", url: "http://127.0.0.1:3100", reuseExistingServer: false, timeout: 60_000},
   ],
 });

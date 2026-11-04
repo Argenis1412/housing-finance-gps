@@ -63,8 +63,8 @@ export function formErrors(form: FormState): string[] {
   const errors: string[] = [];
   for (const group of fieldGroups) for (const [key, label, kind] of group.fields) {
     const value = decimal(form.values[key] ?? "");
-    const valid = kind === "money" ? /^[+-]?[0-9]{1,18}\.[0-9]{2}$/.test(value) : kind === "rate" ? /^[0-9]+(?:\.[0-9]{1,12})?$/.test(value) : key === "firstAdjustment" ? monthInteger(value) > 0 : period(value) > 0;
-    if (!valid) errors.push(`${label}: informe ${kind === "money" ? "um valor com dois centavos decimais" : kind === "rate" ? "uma taxa decimal, sem porcentagem" : "um mês inteiro entre 1 e 600"}.`);
+    const valid = kind === "money" ? /^[+-]?[0-9]{1,18}\.[0-9]{2}$/.test(value) : kind === "rate" ? /^(?:0(?:\.[0-9]{1,12})?|1(?:\.0{1,12})?)$/.test(value) : key === "firstAdjustment" ? monthInteger(value) > 1 : period(value) > 0;
+    if (!valid) errors.push(`${label}: informe ${kind === "money" ? "um valor com dois centavos decimais" : kind === "rate" ? "uma taxa decimal entre 0 e 1, sem porcentagem ou zeros iniciais" : key === "firstAdjustment" ? "um mês inteiro maior que 1" : "um mês inteiro entre 1 e 600"}.`);
   }
   if (!form.values.scenario) errors.push("Escolha o rótulo do cenário de contemplação.");
   if (form.months.some(m => m.income_components === null || m.external_expenses === null)) errors.push("Declare renda e despesas de todos os 60 meses, inclusive listas vazias.");

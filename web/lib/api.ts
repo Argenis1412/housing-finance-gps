@@ -71,7 +71,9 @@ export function validateResult(value: unknown): Result {
     check(ledger.length === 61); ledger.forEach((r, n) => row(r, n));
     const outflows = array(a.monthly_housing_outflows);
     check(outflows.length === 60 && outflows.every(amount));
-    array(a.violations).forEach(v => check(object(v) && ["cash_nonnegative", "minimum_liquidity", "maximum_monthly_housing_outflow"].includes(String(v.constraint)) && Number.isInteger(v.month) && amount(v.actual) && amount(v.threshold)));
+    const violations = array(a.violations);
+    check((violations.length > 0) === (a.status === "constraint_infeasible"));
+    violations.forEach(v => check(object(v) && ["cash_nonnegative", "minimum_liquidity", "maximum_monthly_housing_outflow"].includes(String(v.constraint)) && Number.isInteger(v.month) && amount(v.actual) && amount(v.threshold)));
   });
   check(["compared", "single_eligible", "no_eligible"].includes(String(value.status)));
   const groups = array(value.ranking_groups);
@@ -81,7 +83,9 @@ export function validateResult(value: unknown): Result {
   const members = groups.flatMap(g => array(g));
   check(members.length === eligible.length && new Set(members).size === members.length && members.every(s => eligible.includes(s)));
   check(value.status === "no_eligible" ? eligible.length === 0 : value.status === "single_eligible" ? eligible.length === 1 : eligible.length >= 2);
-  check(array(value.limitations).every(v => typeof v === "string") && object(value.declared_inputs));
+  const declared = value.declared_inputs;
+  check(array(value.limitations).every(v => typeof v === "string") && object(declared));
+  check(["shared", "constraints", "financing", "rent", "consortium", "monthly_resources"].every(key => Object.hasOwn(declared, key)));
   return value as Result;
 }
 const messages: Record<string, string> = {
@@ -97,7 +101,7 @@ const messages: Record<string, string> = {
   network_error: "Não foi possível acessar a API local. Verifique se ela está em execução e tente novamente.",
   timeout: "A comparação excedeu o tempo de espera. Tente novamente.",
 };
-export function errorMessage(error: unknown): string {return messages[error instanceof Error ? error.message : ""] ?? messages.invalid_response;}
+export function errorMessage(error: unknown): string {const code = error instanceof Error ? error.message : ""; return Object.hasOwn(messages, code) ? messages[code] : messages.invalid_response;}
 export async function compare(request: Request, signal: AbortSignal): Promise<Result> {
   let response: Response;
   try {response = await fetch("/api/v1/comparison/simulations", {method: "POST", headers: {"Content-Type": "application/json"}, body: JSON.stringify(request), cache: "no-store", signal});}
@@ -117,7 +121,7 @@ export async function compare(request: Request, signal: AbortSignal): Promise<Re
   try {value = JSON.parse(new TextDecoder("utf-8", {fatal: true}).decode(bytes));} catch {throw new Error("invalid_response");}
   if (!response.ok) {
     check(object(value) && value.api_version === "v1" && typeof value.code === "string");
-    throw new Error(value.code in messages ? value.code : "invalid_response");
+    throw new Error(Object.hasOwn(messages, value.code) ? value.code : "invalid_response");
   }
   return validateResult(value);
 }

@@ -1,6 +1,7 @@
 import {mkdtemp, readFile, writeFile, rm} from "node:fs/promises";
 import {tmpdir} from "node:os";
 import {join, resolve} from "node:path";
+import {pathToFileURL} from "node:url";
 import {execFileSync} from "node:child_process";
 import openapiTS, {astToString} from "openapi-typescript";
 import ts from "typescript";
@@ -12,7 +13,7 @@ try {
   await writeFile(schema, output);
   // A named recursive alias avoids TS2502 for indexed recursive union members.
   // It represents only the transport codec, never a financial schema.
-  const generated = "export type ClosedJsonValue = { [key: string]: ClosedJsonValue } | ClosedJsonValue[] | string | number | boolean | null;\n\n" + astToString(await openapiTS(new URL(`file://${schema}`), {
+  const generated = "export type ClosedJsonValue = { [key: string]: ClosedJsonValue } | ClosedJsonValue[] | string | number | boolean | null;\n\n" + astToString(await openapiTS(pathToFileURL(schema), {
     transform(_schema, context) {
       if (/\/ClosedJsonValue-(Input|Output)$/.test(context.path)) return ts.factory.createTypeReferenceNode("ClosedJsonValue");
     },

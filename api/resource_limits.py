@@ -17,7 +17,7 @@ COMPARISON_PATH = "/api/v1/comparison/simulations"
 
 
 def is_comparison_request(method: str, path: str) -> bool:
-    return method == "POST" and path == COMPARISON_PATH
+    return method == "POST" and path in {COMPARISON_PATH, COMPARISON_PATH + "/"}
 
 
 def _pairs(pairs: list[tuple[str, object]]) -> dict[str, object]:
@@ -41,7 +41,7 @@ def _reject_number(_: str) -> object:
 
 
 def _check_json(value: object, depth: int = 0) -> None:
-    if depth > 64:
+    if depth > 64 or (depth == 64 and isinstance(value, (dict, list))):
         raise ValueError("JSON depth")
     if isinstance(value, str):
         value.encode("utf-8", errors="strict")

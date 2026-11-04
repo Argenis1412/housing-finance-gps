@@ -1,5 +1,5 @@
 import {test, expect} from "@playwright/test";
-import {copyComponent, createRequest, fieldGroups, initialForm, updateValue, type Component} from "../lib/form-state";
+import {copyComponent, createRequest, fieldGroups, formErrors, initialForm, updateValue, type Component} from "../lib/form-state";
 import {money} from "../lib/formatting";
 
 const component: Component = {component_id: "synthetic-income", amount: "3.00", classification: "projected_assumption", source_reference: "synthetic-source", source_as_of: "2026-11-03T12:00:00Z", assumption_reference: "synthetic-plan"};
@@ -49,6 +49,73 @@ test("first rent adjustment does not inherit the contractual term cap", () => {
   for (const group of fieldGroups) for (const [key, , kind] of group.fields) if (!form.values[key]) form.values[key] = kind === "month" ? "1" : "0.00";
   const shared = createRequest(form).comparison.shared as Record<string, unknown>;
   expect(shared.first_rent_adjustment_month).toBe(1000);
+});
+
+test("review validates first-adjustment boundaries and canonical admitted rates", () => {
+  for (const [value, valid] of [["1", false], ["2", true], ["1000", true]] as const) {
+    const errors = formErrors(updateValue(initialForm(), "firstAdjustment", value));
+    expect(errors.some(e => e.startsWith("Primeiro mês de reajuste:"))).toBe(!valid);
+    if (!valid) expect(errors).toContain("Primeiro mês de reajuste: informe um mês inteiro maior que 1.");
+  }
+  for (const key of ["adjustment", "financeRate", "return"]) for (const [value, valid] of [["00.5", false], ["10", false], ["1.01", false], ["0,05", true], ["1.000", true]] as const) {
+    const label = fieldGroups.flatMap(g => g.fields).find(([field]) => field === key)![1];
+    expect(formErrors(updateValue(initialForm(), key, value)).some(e => e.startsWith(`${label}:`))).toBe(!valid);
+  }
+});
+
+test("profile rejects impossible UTC dates and removal cancels a pending copy", async ({page}) => {
+  await page.goto("/");
+  await page.getByLabel("Identificação do componente", {exact: true}).fill("synthetic-income");
+  await page.getByLabel("Valor do componente", {exact: true}).fill("3,00");
+  await page.getByLabel("Referência da fonte", {exact: true}).fill("synthetic-source");
+  await page.getByLabel("Classificação", {exact: true}).selectOption("observed_data");
+  for (const date of ["2026-02-30T12:00:00Z", "2025-02-29T12:00:00Z", "0000-01-01T00:00:00Z", "2026-01-01T24:00:00Z", "2026-01-01T12:00:00+00:00"]) {
+    await page.getByLabel("Data da fonte em UTC", {exact: true}).fill(date);
+    await page.getByRole("button", {name: "Revisar aplicação do componente"}).click();
+    await expect(page.getByRole("alert", {name: "Erro do perfil"})).toBeVisible();
+    await expect(page.getByRole("region", {name: "Revisar cópia do perfil"})).toHaveCount(0);
+  }
+  await page.getByLabel("Data da fonte em UTC", {exact: true}).fill("2024-02-29T12:00:00Z");
+  await page.getByRole("button", {name: "Revisar aplicação do componente"}).click();
+  await page.getByRole("button", {name: "Confirmar declarações do perfil"}).click();
+  await page.getByRole("button", {name: "Editar este componente", exact: true}).click();
+  await page.getByRole("button", {name: "Revisar aplicação do componente"}).click();
+  await expect(page.getByRole("region", {name: "Revisar cópia do perfil"})).toBeVisible();
+  await page.getByRole("button", {name: "Remover do mês 1", exact: true}).click();
+  await expect(page.getByRole("region", {name: "Revisar cópia do perfil"})).toHaveCount(0);
+  await expect(page.getByRole("button", {name: "Editar este componente", exact: true})).toHaveCount(0);
+});
+
+test("schedule and waiting copies reject previews beyond a shortened period", async ({page}) => {
+  await page.goto("/");
+  await page.locator('input[name="consortiumTerm"]').fill("2");
+  for (const label of ["Crédito", "Administração", "Fundo de reserva", "Seguro"]) await page.getByLabel(`${label} por mês`, {exact: true}).fill("1,00");
+  await page.getByLabel("Até o mês do cronograma", {exact: true}).fill("2");
+  await page.getByRole("button", {name: "Revisar cópia do cronograma", exact: true}).click();
+  await page.locator('input[name="consortiumTerm"]').fill("1");
+  await page.getByRole("button", {name: "Confirmar cópia do cronograma", exact: true}).click();
+  await expect(page.getByRole("alert", {name: "Erro do cronograma"})).toContainText("prazo mudou");
+  await expect(page.getByRole("region", {name: "Revisar cópia do cronograma"})).toHaveCount(0);
+  await page.getByText("Editar as 1 linhas individualmente", {exact: true}).click();
+  await expect(page.getByLabel("Crédito, mês 1", {exact: true})).toHaveValue("");
+  await page.getByLabel("Até o mês do cronograma", {exact: true}).fill("1");
+  await page.getByRole("button", {name: "Revisar cópia do cronograma", exact: true}).click();
+  await page.getByRole("button", {name: "Confirmar cópia do cronograma", exact: true}).click();
+  await expect(page.getByLabel("Crédito, mês 1", {exact: true})).toHaveValue("1.00");
+
+  await page.locator('input[name="contemplation"]').fill("2");
+  await page.getByLabel("Valor de espera a repetir", {exact: true}).fill("1,00");
+  await page.getByLabel("Até o mês de espera", {exact: true}).fill("2");
+  await page.getByRole("button", {name: "Revisar cópia dos custos de espera", exact: true}).click();
+  await page.locator('input[name="contemplation"]').fill("1");
+  await page.getByRole("button", {name: "Confirmar cópia do cronograma", exact: true}).click();
+  await expect(page.getByRole("alert", {name: "Erro do cronograma"})).toContainText("prazo mudou");
+  await page.getByText("Editar os 1 meses de espera", {exact: true}).click();
+  await expect(page.getByLabel("Espera, mês 1", {exact: true})).toHaveValue("");
+  await page.getByLabel("Até o mês de espera", {exact: true}).fill("1");
+  await page.getByRole("button", {name: "Revisar cópia dos custos de espera", exact: true}).click();
+  await page.getByRole("button", {name: "Confirmar cópia do cronograma", exact: true}).click();
+  await expect(page.getByLabel("Espera, mês 1", {exact: true})).toHaveValue("1.00");
 });
 
 test("initial form is blank, keyboard accessible and communicates incomplete declarations", async ({page}, info) => {
