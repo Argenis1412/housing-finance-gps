@@ -74,6 +74,17 @@ changes must retain that decoding/presentation path or fail explicitly.
 
 Unknown record/envelope versions never fall back to latest. Corrupt or
 unsupported rows remain listable/deletable and do not block other records.
+Index summary IDs are unverified text. For read/delete, a canonical UUID keeps
+its existing URL; other index IDs use `~` followed by unpadded canonical base64url
+of the UTF-8 ID in the same path parameter. This transports empty IDs, dot
+segments and reserved characters without URL normalization or extra routes.
+Malformed locators return 422. Opening still checks the original index ID
+against the protected canonical UUID and fails explicitly on corruption.
+Deleting an orphan index row removes that row without creating or changing any
+operation marker. A repeated deletion returns 204 only when a marker exists;
+an already removed orphan without a marker returns 404. Original operation
+markers continue preventing delayed retry resurrection. A new POST encountering
+an orphan row under its UUID fails as corruption before financial execution.
 An unknown database schema blocks all persistence operations because its
 layout cannot be assumed. Existing domain replay remains callable in Python;
 tests replay recovered envelopes. No replay interface or verification claim

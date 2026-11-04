@@ -94,8 +94,12 @@ The prior B acceptance baseline was 541 fast Python tests, four slow tests,
 application/replay tests; neither count substitutes for this increment's full
 QA. Independent diff review closed after structural-evidence, historical-error,
 filesystem-error and illegible-index-date regressions were added. Final local
-QA passes 610 fast Python tests, four slow tests, 34 frontend tests and 98%
+QA passes 659 fast Python tests, four slow tests, 36 frontend tests and 98%
 domain coverage, plus lint, strict types, OpenAPI/consumer checks and build.
+Damaged index identifiers remain listable and deletable through safe locators;
+read validation remains strict. Regression tests also protect structural rejection
+and keyboard focus in the deletion dialog. A separate measurement of the saved
+application module reports 99% coverage; it is outside the domain coverage gate.
 
 ## Deferred decisions
 

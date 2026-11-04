@@ -194,6 +194,79 @@ def test_corruption_or_incompatibility_never_becomes_a_result(repository: Sqlite
     assert error.value.code == expected
 
 
+@pytest.mark.parametrize(("target", "path", "value"), [
+    ("wrapper", ("extra",), True),
+    ("wrapper", ("saved_at",), "illegible"),
+    ("wrapper", ("saved_at",), "2026-02-30T12:00:00Z"),
+    ("wrapper", ("simulation_id",), "broken-id"),
+    ("wrapper", ("envelope", "timezone"), None),
+    ("raw", ("comparison",), []),
+    ("raw", ("comparison", "extra"), True),
+    ("outcome", ("kind",), "failure"),
+    ("outcome", ("normalized_input", "monthly_resources", "income_basis"), None),
+    ("outcome", ("normalized_input", "monthly_resources", "months"), []),
+    ("outcome", ("normalized_input", "monthly_resources", "months", 0, "month"), True),
+    ("outcome", ("normalized_input", "monthly_resources", "months", 0, "income_components"), {}),
+    ("outcome", ("normalized_input", "monthly_resources", "months", 0, "income_components", 0, "amount"), "-0.00"),
+    ("outcome", ("normalized_input", "monthly_resources", "months", 0, "income_components", 0, "classification"), "contractual_data"),
+    ("outcome", ("trace", "extra"), True),
+    ("outcome", ("alternatives",), []),
+    ("outcome", ("alternatives", 0, "strategy"), "rent"),
+    ("outcome", ("alternatives", 0, "status"), "unknown"),
+    ("outcome", ("alternatives", 0), {"strategy": "sac", "status": "domain_failure"}),
+    ("outcome", ("trace", "child_evidence"), []),
+    ("child", ("strategy",), "rent"),
+    ("child", ("extra",), True),
+    ("child", ("input_classification",), []),
+    ("sealed_sac", ("kind",), "unknown"),
+    ("sealed_sac", ("normalized_input", "strategy_input", "principal"), "1.0"),
+    ("sealed_sac", ("normalized_input", "strategy_input", "effective_monthly_rate"), False),
+    ("sealed_sac", ("normalized_input", "strategy_input", "term_months"), 0),
+    ("sealed_sac", ("trace", "extra"), True),
+    ("sealed_sac", ("trace", "comparison_ledger", 0, "month"), True),
+    ("sealed_sac", ("trace", "resource_postings", 0, "closing_cash"), "-0.00"),
+    ("sealed_rent", ("normalized_input", "strategy_input", "first_rent_adjustment_month"), True),
+    ("sealed_consortium", ("normalized_input", "strategy_input", "property_purchase_event"), 1),
+    ("sealed_consortium", ("normalized_input", "strategy_input", "input_classification"), {}),
+    ("sealed_consortium", ("normalized_input", "strategy_input", "rule_conventions"), {}),
+    ("sealed_consortium", ("normalized_input", "strategy_input", "requested_features"), [None]),
+    ("sealed_consortium", ("normalized_input", "strategy_input", "monthly_schedule", 0, "insurance"), "invalid"),
+    ("admission", ("extra",), True),
+    ("admission", ("admission_failure", "code"), "unknown"),
+])
+def test_rechecksummed_structural_damage_is_rejected(repository: SqliteComparisonRepository, target: str, path: tuple[str | int, ...], value: object) -> None:
+    raw = raw_request()
+    if target == "admission":
+        raw["financing"] = None
+    save(repository, raw)
+    with repository.transaction() as transaction:
+        _, original = transaction.find(ID)
+    assert original is not None
+    wrapper = json.loads(original.record_jcs)
+    envelope = wrapper["envelope"]
+    raw = json.loads(envelope["raw_request_jcs"])
+    outcome = json.loads(envelope["sealed_outcome_jcs"])
+    child = outcome["trace"]["child_evidence"][{"sealed_rent": 2, "sealed_consortium": 3}.get(target, 0)]
+    sealed: dict[str, object] = json.loads(child["sealed_outcome_jcs"]) if target.startswith("sealed_") else {}
+    roots: dict[str, object] = {"wrapper": wrapper, "raw": raw, "outcome": outcome, "child": child, "admission": child}
+    parent: object = sealed if target.startswith("sealed_") else roots[target]
+    for key in path[:-1]:
+        parent = cast(list[object], parent)[key] if isinstance(key, int) else cast(dict[str, object], parent)[key]
+    last = path[-1]
+    if isinstance(last, int):
+        cast(list[object], parent)[last] = value
+    else:
+        cast(dict[str, object], parent)[last] = value
+    if target.startswith("sealed_"):
+        child["sealed_outcome_jcs"] = canonical_json(sealed)
+    envelope["raw_request_jcs"] = canonical_json(raw)
+    envelope["sealed_outcome_jcs"] = canonical_json(outcome)
+    encoded = canonical_json(wrapper)
+    record = replace(original, simulation_id=wrapper["simulation_id"], saved_at=wrapper["saved_at"], record_jcs=encoded, sha256=hashlib.sha256(encoded.encode()).hexdigest())
+    with pytest.raises(saved.SavedComparisonError, match="stored_simulation_corrupt"):
+        saved.decode_record(record, record.simulation_id)
+
+
 def test_pagination_is_bounded_and_ties_have_stable_id_order(repository: SqliteComparisonRepository) -> None:
     second = "00000000-0000-4000-8000-000000000002"
     save(repository)

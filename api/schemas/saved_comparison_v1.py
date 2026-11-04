@@ -8,6 +8,7 @@ from api.schemas.comparison_v1 import ComparisonInputsV1, ComparisonSimulationRe
 
 
 type OperationId = Annotated[str, StringConstraints(pattern=r"^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$")]
+type IndexLocator = Annotated[str, StringConstraints(pattern=r"^(?:[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}|~[A-Za-z0-9_-]*)$")]
 
 
 class SavedComparisonCreationV1(BaseModel):
@@ -27,7 +28,7 @@ class SavedComparisonV1(BaseModel):
 
 class SavedComparisonSummaryV1(BaseModel):
     model_config = ConfigDict(extra="forbid", strict=True)
-    simulation_id: OperationId
+    simulation_id: str
     saved_at: str
 
 

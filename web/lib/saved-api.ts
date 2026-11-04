@@ -9,6 +9,9 @@ const id = (value: unknown): value is string => typeof value === "string" && /^[
 const timestamp = (value: unknown): value is string => typeof value === "string" && /^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z$/.test(value);
 const object = (value: unknown): value is Record<string, unknown> => value !== null && typeof value === "object" && !Array.isArray(value);
 function check(value: unknown): asserts value {if (!value) throw new Error("invalid_response");}
+function locator(value: string): string {
+  return id(value) ? value : "~" + btoa(Array.from(new TextEncoder().encode(value), byte => String.fromCharCode(byte)).join("")).replaceAll("+", "-").replaceAll("/", "_").replace(/=+$/, "");
+}
 
 async function request(path: string, init: RequestInit = {}, signal?: AbortSignal): Promise<unknown> {
   const timeout = new AbortController();
@@ -33,19 +36,17 @@ export async function createSaved(operationId: string, comparison: Creation, sig
   return validateSaved(await request(base, {method: "POST", headers: {"Content-Type": "application/json"}, body: JSON.stringify({...comparison, operation_id: operationId})}, signal), operationId);
 }
 export async function readSaved(simulationId: string, signal: AbortSignal): Promise<SavedResult> {
-  check(id(simulationId));
-  return validateSaved(await request(`${base}/${simulationId}`, {}, signal), simulationId);
+  return validateSaved(await request(`${base}/${locator(simulationId)}`, {}, signal), simulationId);
 }
 export async function listSaved(offset: number, signal: AbortSignal): Promise<SavedList> {
   const value = await request(`${base}?limit=20&offset=${offset}`, {}, signal);
   check(object(value) && value.api_version === "v1" && value.kind === "saved_comparison_list" && Array.isArray(value.items) && value.items.length <= 20);
-  value.items.forEach(item => check(object(item) && id(item.simulation_id) && typeof item.saved_at === "string"));
+  value.items.forEach(item => check(object(item) && typeof item.simulation_id === "string" && typeof item.saved_at === "string"));
   check(value.next_offset === null || (Number.isSafeInteger(value.next_offset) && (value.next_offset as number) > offset));
   return value as SavedList;
 }
 export async function deleteSaved(simulationId: string, signal: AbortSignal): Promise<void> {
-  check(id(simulationId));
-  check(await request(`${base}/${simulationId}`, {method: "DELETE"}, signal) === null);
+  check(await request(`${base}/${locator(simulationId)}`, {method: "DELETE"}, signal) === null);
 }
 export function uncertainSave(error: unknown): boolean {
   return !(error instanceof Error) || ["network_error", "timeout", "invalid_response", "incompatible_response", "response_too_large"].includes(error.message) || error.name === "AbortError" || error.name === "TypeError";

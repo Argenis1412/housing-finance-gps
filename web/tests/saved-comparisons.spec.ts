@@ -64,9 +64,15 @@ test("review, atomic save, reload, readonly reopening and confirmed deletion", a
   expect((await (await request.get(`${path}/${stored.simulation_id}`)).json())).toEqual(stored);
   await page.screenshot({path: info.outputPath("saved-result.png"), fullPage: true});
   await page.getByRole("button", {name: "Excluir esta comparação"}).click();
-  await page.getByRole("button", {name: "Cancelar exclusão"}).click();
+  await expect(page.getByRole("alertdialog")).toBeFocused();
+  await page.keyboard.press("Tab");
+  await expect(page.getByRole("button", {name: "Confirmar exclusão"})).toBeFocused();
+  await page.keyboard.press("Tab");
+  await expect(page.getByRole("button", {name: "Cancelar exclusão"})).toBeFocused();
+  await page.keyboard.press("Enter");
   expect((await request.get(`${path}/${stored.simulation_id}`)).status()).toBe(200);
   await page.getByRole("button", {name: "Excluir esta comparação"}).click();
+  await expect(page.getByRole("alertdialog")).toBeFocused();
   await page.getByRole("button", {name: "Confirmar exclusão"}).click();
   await expect(page.getByText("Nenhuma comparação salva nesta página.")).toBeVisible();
   await expect(page.getByRole("heading", {name: "Quatro caminhos, as mesmas origens"})).toHaveCount(0);
@@ -148,4 +154,30 @@ test("an illegible index date does not hide or prevent deleting a saved record",
   await page.getByRole("button", {name: /^Excluir /}).click();
   await page.getByRole("button", {name: "Confirmar exclusão"}).click();
   await expect(page.getByText("Nenhuma comparação salva nesta página.")).toBeVisible();
+});
+
+test("damaged index IDs use safe locators through the proxy and remain deletable", async ({page}) => {
+  let damaged = "", remaining = true;
+  await page.route(`**${path}?*`, route => route.fulfill({json: {api_version: "v1", kind: "saved_comparison_list", items: remaining ? [{simulation_id: damaged, saved_at: "2026-11-04T12:00:00Z"}] : [], next_offset: null}}));
+  await page.route(`**${path}/*`, async route => {
+    const locator = "~" + Buffer.from(damaged, "utf8").toString("base64url");
+    expect(new URL(route.request().url()).pathname).toBe(`${path}/${locator}`);
+    // The real proxy/backend must receive the locator as one path segment.
+    const response = await route.fetch();
+    expect(response.status()).toBe(404);
+    expect((await response.json()).code).toBe("simulation_not_found");
+    if (route.request().method() === "DELETE") {
+      remaining = false; await route.fulfill({status: 204, body: ""});
+    } else await route.fulfill({status: 500, json: {api_version: "v1", code: "stored_simulation_corrupt", message_pt_br: "safe"}});
+  });
+  for (damaged of ["broken-id", "", ".", "..", "broken/id?#%", "índice\u0000"]) {
+    remaining = true;
+    await page.goto("/saved");
+    await page.getByRole("button", {name: /^Abrir(?: |$)/}).click();
+    await expect(page.getByRole("alert", {name: "Falha nas comparações salvas"})).toBeVisible();
+    await page.getByRole("button", {name: /^Excluir(?: |$)/}).click();
+    await expect(page.getByRole("alertdialog")).toBeFocused();
+    await page.getByRole("button", {name: "Confirmar exclusão"}).click();
+    await expect(page.getByText("Nenhuma comparação salva nesta página.")).toBeVisible();
+  }
 });

@@ -287,6 +287,8 @@ def save_comparison(
     raw = canonical_json(comparison)
     with repository.transaction(write=True) as transaction:
         known, record = transaction.find(operation_id)
+        if record is not None and not known:
+            raise SavedComparisonError("stored_simulation_corrupt", 500)
         if known:
             if record is None:
                 raise SavedComparisonError("simulation_deleted", 410)
@@ -319,7 +321,6 @@ def save_comparison(
 
 
 def read_comparison(repository: ComparisonRepository, simulation_id: str) -> dict[str, object]:
-    validate_operation_id(simulation_id)
     with repository.transaction() as transaction:
         known, record = transaction.find(simulation_id)
         if record is None:
@@ -336,9 +337,8 @@ def list_comparisons(repository: ComparisonRepository, limit: int = 20, offset: 
 
 
 def delete_comparison(repository: ComparisonRepository, simulation_id: str) -> None:
-    validate_operation_id(simulation_id)
     with repository.transaction(write=True) as transaction:
-        known, _ = transaction.find(simulation_id)
-        if not known:
+        known, record = transaction.find(simulation_id)
+        if not known and record is None:
             raise SavedComparisonError("simulation_not_found", 404)
         transaction.delete(simulation_id)

@@ -118,8 +118,8 @@ those rules.
 The configured tools and locked versions are owned by `pyproject.toml` and
 `uv.lock`; the CI sequence is owned by `.github/workflows/validation.yml`.
 
-- The current synthetic validation baseline is 610 fast Python tests, four slow
-  tests and 34 frontend tests, with 98% combined domain coverage (95% gate).
+- The current synthetic validation baseline is 659 fast Python tests, four slow
+  tests and 36 frontend tests, with 98% combined domain coverage (95% gate).
 - Ruff checks Python lint rules. Automated formatting is not configured.
 - Pyright runs in strict mode over `domain/`, `application/`, `api/`,
   `infrastructure/`, the migration command and `tests/`.
@@ -135,8 +135,8 @@ The configured tools and locked versions are owned by `pyproject.toml` and
   pushes to `main` and pull requests targeting `main`. The fast `validation`
   job runs lint, types, and tests with branch instrumentation over `domain/`,
   then enforces Coverage.py's combined total threshold of 95%. The matrix job
-  runs all `slow` tests without coverage instrumentation. `application/` and
-  `api/` have tests but are outside the measured source scope.
+  runs all `slow` tests without coverage instrumentation. `application/`,
+  `infrastructure/` and `api/` have tests but are outside the measured source scope.
 
 Configured commands:
 

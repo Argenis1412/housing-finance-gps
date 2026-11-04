@@ -436,6 +436,7 @@ export interface components {
             /** Transaction Cost Amount */
             transaction_cost_amount?: string | null;
         };
+        IndexLocator: string;
         MoneyOutput: string;
         /** NormalizedComparisonV1 */
         NormalizedComparisonV1: {
@@ -528,7 +529,8 @@ export interface components {
         SavedComparisonSummaryV1: {
             /** Saved At */
             saved_at: string;
-            simulation_id: components["schemas"]["OperationId"];
+            /** Simulation Id */
+            simulation_id: string;
         };
         /** SavedComparisonV1 */
         SavedComparisonV1: {
@@ -745,7 +747,7 @@ export interface operations {
             query?: never;
             header?: never;
             path: {
-                simulation_id: components["schemas"]["OperationId"];
+                simulation_id: components["schemas"]["IndexLocator"];
             };
             cookie?: never;
         };
@@ -830,7 +832,7 @@ export interface operations {
             query?: never;
             header?: never;
             path: {
-                simulation_id: components["schemas"]["OperationId"];
+                simulation_id: components["schemas"]["IndexLocator"];
             };
             cookie?: never;
         };

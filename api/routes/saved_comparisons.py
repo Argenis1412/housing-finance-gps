@@ -1,6 +1,7 @@
 """Explicit saved-comparison operations with serialization before commit."""
 
 from collections.abc import Callable
+import base64
 import json
 from typing import Annotated, cast
 
@@ -16,7 +17,7 @@ from api.error_mapping import comparison_error_response, public_message
 from api import resource_limits
 from api.schemas.comparison_v1 import ComparisonApiErrorV1
 from api.schemas.saved_comparison_v1 import (
-    OperationId, SavedComparisonCreationV1, SavedComparisonListV1, SavedComparisonV1,
+    IndexLocator, SavedComparisonCreationV1, SavedComparisonListV1, SavedComparisonV1,
 )
 
 
@@ -26,6 +27,19 @@ _ERRORS: dict[int | str, dict[str, object]] = {status: {"model": ComparisonApiEr
 
 def _repository(request: Request) -> ComparisonRepository:
     return cast(ComparisonRepository, request.app.state.comparison_repository)
+
+
+def _index_id(locator: str) -> str:
+    if not locator.startswith("~"):
+        return locator
+    try:
+        encoded = locator[1:]
+        raw = base64.b64decode(encoded + "=" * (-len(encoded) % 4), altchars=b"-_", validate=True)
+        if base64.urlsafe_b64encode(raw).decode("ascii").rstrip("=") != encoded:
+            raise ValueError("noncanonical locator")
+        return raw.decode("utf-8")
+    except ValueError:
+        raise SavedComparisonError("invalid_input", 422) from None
 
 
 def _bytes(payload: dict[str, object]) -> bytes:
@@ -85,18 +99,18 @@ def list_saved(
 
 
 @router.get("/{simulation_id}", response_model=SavedComparisonV1, responses=_ERRORS, summary="Read stored historical output without calculation or replay")
-def read_saved(simulation_id: Annotated[OperationId, Path()], repository: Annotated[ComparisonRepository, Depends(_repository)]) -> Response:
+def read_saved(simulation_id: Annotated[IndexLocator, Path()], repository: Annotated[ComparisonRepository, Depends(_repository)]) -> Response:
     def action() -> Response:
         try:
-            return _response(_prepare(read_comparison(repository, simulation_id)))
+            return _response(_prepare(read_comparison(repository, _index_id(simulation_id))))
         except (ValidationError, TypeError, KeyError, IndexError, AttributeError):
             raise SavedComparisonError("stored_simulation_corrupt", 500) from None
     return _safe(action)
 
 
 @router.delete("/{simulation_id}", status_code=204, responses=_ERRORS, summary="Delete evidence while retaining its opaque operation ID")
-def delete_saved(simulation_id: Annotated[OperationId, Path()], repository: Annotated[ComparisonRepository, Depends(_repository)]) -> Response:
+def delete_saved(simulation_id: Annotated[IndexLocator, Path()], repository: Annotated[ComparisonRepository, Depends(_repository)]) -> Response:
     def action() -> Response:
-        delete_comparison(repository, simulation_id)
+        delete_comparison(repository, _index_id(simulation_id))
         return _response(status=204)
     return _safe(action)

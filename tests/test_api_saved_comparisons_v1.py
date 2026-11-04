@@ -2,6 +2,7 @@
 
 # pyright: reportUnknownVariableType=false, reportUnknownMemberType=false, reportUnknownArgumentType=false
 
+import base64
 import json
 import hashlib
 from pathlib import Path
@@ -138,6 +139,43 @@ def test_corrupt_record_is_isolated_discoverable_and_deletable(client: TestClien
     assert client.post(PATH, json=payload()).json()["code"] == "stored_simulation_corrupt"
     assert client.get(f"{PATH}/{second}").status_code == 200
     assert client.delete(f"{PATH}/{ID}").status_code == 204
+
+
+@pytest.mark.parametrize("damaged_id", ["broken-id", "", ".", "..", "broken/id?#%", "índice\x00", "00000000-0000-4000-8000-000000000003"])
+def test_corrupt_index_id_remains_listable_and_deletable(client: TestClient, damaged_id: str, monkeypatch: pytest.MonkeyPatch) -> None:
+    second = "00000000-0000-4000-8000-000000000002"
+    assert client.post(PATH, json=payload()).status_code == 201
+    assert client.post(PATH, json={**payload(), "operation_id": second}).status_code == 201
+    with sqlite3.connect(cast(FastAPI, client.app).state.comparison_repository.path) as connection:
+        trigger = connection.execute("SELECT sql FROM sqlite_master WHERE name='immutable_saved_comparisons'").fetchone()[0]
+        connection.execute("DROP TRIGGER immutable_saved_comparisons")
+        connection.execute("UPDATE saved_comparisons SET simulation_id=? WHERE simulation_id=?", (damaged_id, ID))
+        connection.execute(trigger)
+    response = client.get(PATH)
+    assert response.status_code == 200
+    assert {item["simulation_id"] for item in response.json()["items"]} == {damaged_id, second}
+    locator = "~" + base64.urlsafe_b64encode(damaged_id.encode()).decode().rstrip("=")
+    assert client.get(f"{PATH}/{locator}").json()["code"] == "stored_simulation_corrupt"
+    assert client.get(f"{PATH}/{second}").status_code == 200
+    def forbidden(*args: object, **kwargs: object) -> object:
+        raise AssertionError("financial execution on damaged index")
+    monkeypatch.setattr(application, "create_comparison_v2_envelope", forbidden)
+    if damaged_id.endswith("000000000003"):
+        assert client.post(PATH, json={**payload(), "operation_id": damaged_id}).json()["code"] == "stored_simulation_corrupt"
+    assert client.delete(f"{PATH}/{locator}").status_code == 204
+    assert client.delete(f"{PATH}/{locator}").status_code == 404
+    assert [item["simulation_id"] for item in client.get(PATH).json()["items"]] == [second]
+    assert client.post(PATH, json=payload()).json()["code"] == "simulation_deleted"
+    assert client.delete(f"{PATH}/{ID}").status_code == 204
+
+
+@pytest.mark.parametrize("locator", ["~A", "~YR", "~_w", "~=="])
+def test_invalid_locators_are_safe_and_do_not_relax_operation_ids(client: TestClient, locator: str) -> None:
+    for response in (client.get(f"{PATH}/{locator}"), client.delete(f"{PATH}/{locator}"), client.post(PATH, json={**payload(), "operation_id": locator})):
+        assert response.status_code == 422
+        assert response.json()["code"] == "invalid_input"
+        assert response.headers["cache-control"] == "no-store"
+    assert client.get(PATH).json()["items"] == []
 
 
 def test_safe_configuration_errors_do_not_break_transient_creation(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
