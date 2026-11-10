@@ -9,9 +9,11 @@ import sys
 
 import pytest
 
+from application import saved_comparisons
 from application.saved_comparisons import SavedComparisonError
 from infrastructure import sqlite_comparisons as sqlite
 from infrastructure.sqlite_comparisons import SqliteComparisonRepository, migrate_comparisons
+from tests.test_monthly_resources_comparison import raw_request
 from tests.test_saved_comparisons import ID, save
 
 
@@ -56,6 +58,34 @@ def test_explicit_migration_is_repeatable_and_preserves_all_evidence(tmp_path: P
                 connection.execute(f"UPDATE {table} SET simulation_id=?", (ID,))
         with pytest.raises(sqlite3.IntegrityError, match="retained"):
             connection.execute("DELETE FROM comparison_operations")
+
+
+def test_lookup_bounds_characters_and_codec_bounds_utf8_bytes(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    path = tmp_path / "lookup.sqlite3"
+    migrate_comparisons(path)
+    repository = SqliteComparisonRepository(path)
+    request = raw_request()
+    request["financing"] = "café"
+    save(repository, request)
+    with repository.transaction() as transaction:
+        _, original = transaction.find(ID)
+    assert original is not None
+    byte_limit = len(original.record_jcs.encode("utf-8"))
+    assert byte_limit > len(original.record_jcs)
+
+    # Use a valid record to distinguish the byte limit from the SQL character limit.
+    monkeypatch.setattr(saved_comparisons, "MAX_RECORD_BYTES", byte_limit)
+    saved_comparisons.decode_record(original, ID)
+    monkeypatch.setattr(saved_comparisons, "MAX_RECORD_BYTES", byte_limit - 1)
+    with pytest.raises(SavedComparisonError, match="stored_simulation_corrupt"):
+        saved_comparisons.decode_record(original, ID)
+
+    monkeypatch.setattr(sqlite, "MAX_RECORD_BYTES", 32)
+    with repository.transaction() as transaction:
+        known, bounded = transaction.find(ID)
+    assert known and bounded is not None
+    assert bounded.record_jcs == original.record_jcs[:33]
+    assert bounded.sha256 == original.sha256
 
 
 @pytest.mark.parametrize("case", ["unrelated", "future", "wrong_application"])

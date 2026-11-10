@@ -1,6 +1,6 @@
 # Housing Finance GPS — Current Context
 
-> Last updated: November 4, 2026
+> Last updated: November 10, 2026
 > Read [AGENTS.md](../../AGENTS.md) before this document. This file describes
 > current repository reality, not future intent and not implementation history.
 
@@ -45,13 +45,12 @@
   or complete M4. Insurance and nonzero
   financing indexation remain unsupported. This state summary does not declare
   the financing milestone complete or validate the private reference case.
-- **Current priority:** Review the approved local SQLite persistence delivery
-  (#55) before any ready/merge decision. Its independent diff review has closed;
-  configured full QA protects delivery. B was integrated by #54 and its review
-  is complete. The periodic audit remains current: #50, #52 and #54 are
-  behavioral merges 1, 2 and 3 of the current five-PR cycle. Persistence is
-  synthetic and local; sensitivity, break-even, optimization, polish and
-  private-case validation remain deferred.
+- **Local persistence status:** PR #56 merged and closed issue #55. The
+  post-merge lifecycle passed with a temporary synthetic SQLite database.
+  Fault injection reproduced an integrity failure when SQLite truncated a
+  saved record at a literal NUL. The audit cycle is at four of five behavioral
+  merges (#50, #52, #54, and #56). The audit is due after the fifth merge.
+- **Current priority:** Reject NUL-truncated reads of saved comparison evidence.
 
 ## Approved direction
 
@@ -118,7 +117,7 @@ those rules.
 The configured tools and locked versions are owned by `pyproject.toml` and
 `uv.lock`; the CI sequence is owned by `.github/workflows/validation.yml`.
 
-- The current synthetic validation baseline is 659 fast Python tests, four slow
+- The current synthetic validation baseline is 666 fast Python tests, four slow
   tests and 36 frontend tests, with 98% combined domain coverage (95% gate).
 - Ruff checks Python lint rules. Automated formatting is not configured.
 - Pyright runs in strict mode over `domain/`, `application/`, `api/`,

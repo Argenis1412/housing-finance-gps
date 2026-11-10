@@ -8,7 +8,7 @@ import os
 from pathlib import Path
 import sqlite3
 
-from application.saved_comparisons import ComparisonTransaction, SavedComparisonError, StoredComparison
+from application.saved_comparisons import MAX_RECORD_BYTES, ComparisonTransaction, SavedComparisonError, StoredComparison
 
 
 _APPLICATION_ID = 0x48464750
@@ -69,8 +69,16 @@ class _Transaction:
 
     def find(self, simulation_id: str) -> tuple[bool, StoredComparison | None]:
         known = self.connection.execute("SELECT 1 FROM comparison_operations WHERE simulation_id=?", (simulation_id,)).fetchone() is not None
-        # Read a bounded record even if the database file was damaged externally.
-        row = self.connection.execute("SELECT simulation_id, saved_at, substr(record_jcs,1,16777217), sha256 FROM saved_comparisons WHERE simulation_id=?", (simulation_id,)).fetchone()
+        # SQLite TEXT substr stops at NUL. Keep the row deletable but pass an
+        # invalid record to the decoder instead of a potentially valid prefix.
+        row = self.connection.execute(
+            """SELECT simulation_id, saved_at,
+                      CASE WHEN instr(record_jcs, char(0)) > 0 THEN ''
+                           ELSE substr(record_jcs, 1, ?) END,
+                      sha256
+               FROM saved_comparisons WHERE simulation_id=?""",
+            (MAX_RECORD_BYTES + 1, simulation_id),
+        ).fetchone()
         return known, StoredComparison(*row) if row is not None else None
 
     def insert(self, record: StoredComparison) -> None:

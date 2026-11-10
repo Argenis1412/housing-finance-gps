@@ -3,6 +3,7 @@
 # pyright: reportUnknownVariableType=false, reportUnknownMemberType=false, reportUnknownArgumentType=false
 
 import base64
+from contextlib import closing
 import json
 import hashlib
 from pathlib import Path
@@ -139,6 +140,73 @@ def test_corrupt_record_is_isolated_discoverable_and_deletable(client: TestClien
     assert client.post(PATH, json=payload()).json()["code"] == "stored_simulation_corrupt"
     assert client.get(f"{PATH}/{second}").status_code == 200
     assert client.delete(f"{PATH}/{ID}").status_code == 204
+
+
+@pytest.mark.parametrize("encoding", ["UTF-8", "UTF-16le", "UTF-16be"])
+@pytest.mark.parametrize("suffix", ["", "synthetic-corrupt-suffix"])
+def test_literal_nul_cannot_hide_corrupt_record_bytes(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, encoding: str, suffix: str,
+) -> None:
+    path = tmp_path / "encoded.sqlite3"
+    with closing(sqlite3.connect(path, autocommit=True)) as connection:
+        connection.execute(f"PRAGMA encoding='{encoding}'")
+        # Write a database header before closing so the selected encoding persists.
+        connection.execute("CREATE TABLE encoding_seed (value TEXT)")
+        connection.execute("DROP TABLE encoding_seed")
+    migrate_comparisons(path)
+    client = TestClient(create_app(comparison_repository=SqliteComparisonRepository(path)))
+    comparison = raw_request()
+    comparison["financing"] = "café\x00synthetic"
+    request = {"operation_id": ID, "comparison": comparison}
+    second = "00000000-0000-4000-8000-000000000002"
+    created = client.post(PATH, json=request)
+    healthy = client.post(PATH, json={**request, "operation_id": second})
+    assert created.status_code == healthy.status_code == 201
+    assert created.json()["result"]["declared_inputs"]["financing"] == comparison["financing"]
+    assert client.get(f"{PATH}/{ID}").content == created.content
+    assert client.post(PATH, json=request).content == created.content
+
+    with closing(sqlite3.connect(path)) as connection, connection:
+        assert connection.execute("PRAGMA encoding").fetchone() == (encoding,)
+        record, checksum = connection.execute(
+            "SELECT record_jcs, sha256 FROM saved_comparisons WHERE simulation_id=?", (ID,),
+        ).fetchone()
+        assert "café" in record and "\\u0000" in record and "\x00" not in record
+        trigger, = connection.execute(
+            "SELECT sql FROM sqlite_master WHERE name='immutable_saved_comparisons'",
+        ).fetchone()
+        connection.execute("DROP TRIGGER immutable_saved_comparisons")
+        corrupt = record + "\x00" + suffix
+        connection.execute("UPDATE saved_comparisons SET record_jcs=? WHERE simulation_id=?", (corrupt, ID))
+        connection.execute(trigger)
+        assert connection.execute(
+            "SELECT record_jcs, sha256 FROM saved_comparisons WHERE simulation_id=?", (ID,),
+        ).fetchone() == (corrupt, checksum)
+
+    def forbidden(*args: object, **kwargs: object) -> object:
+        pytest.fail("financial execution on corrupt evidence")
+
+    monkeypatch.setattr(application, "create_comparison_v2_envelope", forbidden)
+    before = path.read_bytes()
+    for response in (client.get(f"{PATH}/{ID}"), client.post(PATH, json=request)):
+        assert response.status_code == 500
+        assert response.json()["code"] == "stored_simulation_corrupt"
+        assert response.json()["message_pt_br"] == "A integridade do registro salvo não pôde ser confirmada."
+        assert response.headers["cache-control"] == "no-store"
+        assert "synthetic-corrupt-suffix" not in response.text
+    assert path.read_bytes() == before
+    assert {item["simulation_id"] for item in client.get(PATH).json()["items"]} == {ID, second}
+    assert client.get(f"{PATH}/{second}").content == healthy.content
+    assert client.delete(f"{PATH}/{ID}").status_code == 204
+    assert [item["simulation_id"] for item in client.get(PATH).json()["items"]] == [second]
+    with closing(sqlite3.connect(path)) as connection:
+        assert connection.execute(
+            "SELECT 1 FROM saved_comparisons WHERE simulation_id=?", (ID,),
+        ).fetchone() is None
+        assert connection.execute(
+            "SELECT * FROM comparison_operations WHERE simulation_id=?", (ID,),
+        ).fetchone() == (ID,)
+    assert client.post(PATH, json=request).status_code == 410
 
 
 @pytest.mark.parametrize("damaged_id", ["broken-id", "", ".", "..", "broken/id?#%", "índice\x00", "00000000-0000-4000-8000-000000000003"])
